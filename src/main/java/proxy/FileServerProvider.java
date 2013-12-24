@@ -2,8 +2,11 @@ package proxy;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
+import server.IFileServer;
 import util.RequestMapper;
 import message.Request;
 import message.Response;
@@ -11,8 +14,10 @@ import message.request.UploadRequest;
 
 public class FileServerProvider {
 
-	private Queue<FileServerAdapter> q;
+	private Queue<FileServerAdapter> q; // contains the FileServerAdapters in order of their usage
 	private FileServerAdapter designated;
+	private List<FileServerAdapter> readQuorum;
+	private List<FileServerAdapter> writeQuorum;
 
 	public FileServerProvider(Queue<FileServerAdapter> q) {
 		this.q = q;
@@ -31,7 +36,7 @@ public class FileServerProvider {
 		boolean success = false;
 		FileServerAdapter a = null;
 		Response r = null;
-		// try each fileserver until success
+		// try each fileserver till success
 		while(!success) {
 			a = q.poll();
 			if (a == null) throw new IOException("No fileservers connected."); // q empty
@@ -45,7 +50,38 @@ public class FileServerProvider {
 		}
 		return r;
 	}
-
+	
+	
+	private void determineQuorums() {
+		if (writeQuorum != null) return;
+		// Gifford's scheme
+		int n = q.size();
+		int nw = (n / 2) + 1;	
+		int nr = (n / 2);	
+		// return nw fileservers with least usage
+		ArrayList<FileServerAdapter> read = new ArrayList<FileServerAdapter>();
+		ArrayList<FileServerAdapter> write = new ArrayList<FileServerAdapter>();
+		while (write.size() < nw) {
+			FileServerAdapter elem = q.poll();
+			write.add(elem);
+			if (read.size() < nr) {
+				read.add(elem);
+			}
+		}
+		writeQuorum = write;
+		readQuorum = read;
+	}
+	
+	public List<FileServerAdapter> getWriteQuorum() {
+		determineQuorums();
+		return writeQuorum;	
+	}
+	
+	public List<FileServerAdapter> getReadQuorum() {
+		determineQuorums();
+		return readQuorum;	
+	}
+	
 	/**
 	 * Sends the upload request to all available fileservers and closes each FileServerAdapter's connection afterwards.
 	 * @param request
