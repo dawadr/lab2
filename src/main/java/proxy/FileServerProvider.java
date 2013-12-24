@@ -51,7 +51,6 @@ public class FileServerProvider {
 		return r;
 	}
 	
-	
 	private void determineQuorums() {
 		if (writeQuorum != null) return;
 		// Gifford's scheme
