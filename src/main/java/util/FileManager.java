@@ -46,7 +46,7 @@ public class FileManager {
 
 	public synchronized long getSize(String filename) throws IOException {
 		if (!fileExists(filename)) throw new FileNotFoundException("File not found: " + filename);
-		registerVersion(filename);
+		registerVersion(filename, 1);
 		return new java.io.File(directory + filename).length();
 	}
 
@@ -56,35 +56,34 @@ public class FileManager {
 
 	public synchronized int getVersion(String filename) throws IOException {
 		if (!fileExists(filename)) throw new FileNotFoundException("File not found: " + filename);
-		registerVersion(filename);
+		registerVersion(filename, 1);
 		return versions.get(filename);
 	}
 
 	public synchronized byte[] readFile(String filename) throws IOException {
 		if (!fileExists(filename)) throw new FileNotFoundException("File not found: " + filename);
-		registerVersion(filename);
+		registerVersion(filename, 1);
 		return readBytesFromFile(directory + filename);
 	}
 
-	public synchronized void writeFile(String filename, byte[] content) throws IOException {
+	public synchronized void writeFile(String filename, int version, byte[] content) throws IOException {
 		if (!isFilenameValid(filename)) throw new IOException("Invalid filename.");
 
 		if (versions.containsKey(filename)) {
 			// file gets overwritten
-			int old = versions.get(filename);
-			versions.put(filename, old + 1);
+			versions.put(filename, version);
 		} else {
 			// file is new
-			registerVersion(filename);
+			registerVersion(filename, version);
 		}
 		writeBytesToFile(directory + filename, content);
 	}
 
 
-	private void registerVersion(String filename) {
+	private void registerVersion(String filename, int version) {
 		if (!versions.containsKey(filename)) {
 			// file is new
-			versions.put(filename, 1);
+			versions.put(filename, version);
 		}
 	}
 

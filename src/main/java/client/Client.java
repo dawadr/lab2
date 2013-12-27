@@ -116,7 +116,7 @@ public class Client implements Runnable {
 				Response r2 = new RequestMapper(fsAdapter).invoke(dlReq);
 				if (!(r2 instanceof DownloadFileResponse)) return r; 
 				dfr = (DownloadFileResponse)r2;	
-				fileManager.writeFile(dfr.getTicket().getFilename(), dfr.getContent());
+				fileManager.writeFile(dfr.getTicket().getFilename(), 0, dfr.getContent());
 				return dfr;
 			} catch (IOException e) {
 				fsCon.close();		

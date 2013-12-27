@@ -125,8 +125,8 @@ public class FileServerHandler implements IServerConnectionHandler, IFileServer 
 	@Override
 	public MessageResponse upload(UploadRequest request) throws IOException {
 		log("Uploading " + request.toString());
-		fileManager.writeFile(request.getFilename(), request.getContent());
-		return new MessageResponse("'" + request.getFilename() + "' successfully uploaded.");
+		fileManager.writeFile(request.getFilename(), request.getVersion(), request.getContent());
+		return new MessageResponse("'" + request.getFilename() + "' with Version " + request.getVersion() + " successfully uploaded.");
 	}
 
 }

@@ -2,6 +2,7 @@ package proxy;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.List;
 
 import server.IFileServer;
 import util.RequestMapper;
@@ -205,11 +206,30 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 	@Override
 	public MessageResponse upload(UploadRequest request) throws IOException {
 		if (!loggedIn) return new RefuseResponse();
-		long size = request.getContent().length;
-		log("Uploading '" + request.getFilename() + "' with size " + size);
-		// forward file to all servers
+		
 		FileServerProvider provider = serverManager.getServerProvider();
-		provider.sendAll(request);
+		List<FileServerAdapter> nw = provider.getWriteQuorum();
+		
+		// determine highest version of the file
+		VersionRequest vRequest = new VersionRequest(request.getFilename());
+		int highestVersion = 0;
+		for (FileServerAdapter fs: nw) {
+			Response r = fs.version(vRequest);
+			if (r instanceof VersionResponse) {
+				VersionResponse vr = (VersionResponse) r;
+				if (vr.getVersion() > highestVersion) highestVersion = vr.getVersion();
+			}
+		}
+		
+		// Upload file to Read Quorum
+		UploadRequest uRequest = new UploadRequest(request.getFilename(), highestVersion + 1, request.getContent());
+		long size = request.getContent().length;
+		log("Uploading '" + request.getFilename() + "' with size " + size + " to Write Quorum");	
+		for (FileServerAdapter fs: nw) {
+			fs.upload(uRequest);
+			log("Uploaded '" + uRequest.getFilename() + "' to " + fs.toString());	
+		}
+		
 		// update user's credits
 		uac.increaseCredits(user, size * 2);
 		log("Earned " + size * 2 + " credits");

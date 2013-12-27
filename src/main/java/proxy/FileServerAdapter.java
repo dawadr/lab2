@@ -31,11 +31,11 @@ public class FileServerAdapter implements IFileServer {
 		this.log = log;
 		this.fileServer = fileServer;
 	}
-	
+
 	public IConnection getConnection() {
 		return conn;
 	}
-	
+
 	public FileServer getFileServer() {
 		return fileServer;
 	}
@@ -98,8 +98,12 @@ public class FileServerAdapter implements IFileServer {
 		return (MessageResponse)r;	
 	}
 
-
 	private void log(String message) {
 		if (log != null) log.log("[FileServerAdapter " + conn.getHost() + " Port " + conn.getPort() +  "] " + message);
+	}
+
+	@Override
+	public String toString() {
+		return "[FileServerAdapter " + conn.getHost() + " Port " + conn.getPort() +  "]";
 	}
 }
