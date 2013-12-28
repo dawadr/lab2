@@ -59,6 +59,18 @@
 			<arg value="fs2"/>
 		</java>
 	</target>
+	
+	<target name="run-fileserver3" depends="compile" description="Run 3rd fileserver.">
+		<java classname="server.FileServer" fork="true" classpathref="project.classpath">
+			<arg value="fs3"/>
+		</java>
+	</target>
+			
+	<target name="run-fileserver4" depends="compile" description="Run 4th fileserver.">
+		<java classname="server.FileServer" fork="true" classpathref="project.classpath">
+			<arg value="fs4"/>
+		</java>
+	</target>
 
 	<target name="run-client" depends="compile" description="Run client.">
 		<java classname="client.Client" fork="true" classpathref="project.classpath">
