@@ -13,6 +13,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import util.FileServerComparator;
 import model.FileServer;
 import model.FileServerInfo;
 import net.IConnection;
@@ -37,6 +38,10 @@ public class FileServerManager {
 	private int checkPeriod;
 	private int timeout;
 	private ILogAdapter log;
+	
+	private int nr;
+	private int nw;
+	private boolean quorumsSet;
 
 	public FileServerManager(IDatagramReceiver datagramReceiver, int checkPeriod, int timeout, ILogAdapter log) {
 		this.log = log;
@@ -96,7 +101,15 @@ public class FileServerManager {
 	 * Returns a {@link FileServerProvider} which provides methods to determine the least used fileserver and to send requests to all fileservers.
 	 * @return
 	 */
-	public FileServerProvider getServerProvider() {
+	public FileServerProvider getServerProvider() {		
+		if (!quorumsSet) {		
+			// Gifford's scheme
+			int n = servers.size();
+			nw = (n / 2) + 1;	
+			nr = (n / 2);	
+			quorumsSet = true;
+		}
+		
 		synchronized (servers) {
 			// sort fileservers
 			Collections.sort(servers, new FileServerComparator());
@@ -105,7 +118,7 @@ public class FileServerManager {
 		List<FileServerAdapter> a = getOnlineAdapters();
 		// get queue of adapters
 		ConcurrentLinkedQueue<FileServerAdapter> q = new ConcurrentLinkedQueue<FileServerAdapter>(a);
-		return new FileServerProvider(q);
+		return new FileServerProvider(q, nr, nw);
 	}
 
 	/**
@@ -215,13 +228,5 @@ public class FileServerManager {
 			check();
 		}
 	}
-
-	private class FileServerComparator implements Comparator<FileServer> { 
-		@Override
-		public int compare(FileServer arg0, FileServer arg1) {
-			if (arg0.getUsage() < arg1.getUsage()) return -1;
-			return 1;
-		}
-	};
 
 }

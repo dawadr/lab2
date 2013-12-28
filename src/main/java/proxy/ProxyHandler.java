@@ -2,7 +2,12 @@ package proxy;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import server.IFileServer;
 import util.RequestMapper;
@@ -22,6 +27,7 @@ import message.response.CreditsResponse;
 import message.response.DownloadTicketResponse;
 import message.response.FailedResponse;
 import message.response.InfoResponse;
+import message.response.ListResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
 import message.response.RefuseResponse;
@@ -121,12 +127,14 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		}
 	}
 
+
 	@Override
 	public Response credits() throws IOException {
 		if (!loggedIn) return new RefuseResponse();
 		log("Credits requested");
 		return new CreditsResponse(user.getCredits());
 	}
+
 
 	@Override
 	public Response buy(BuyRequest credits) throws IOException {
@@ -136,15 +144,40 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		return new BuyResponse(user.getCredits());
 	}
 
+
 	@Override
 	public Response list() throws IOException {
 		if (!loggedIn) return new RefuseResponse();	
 		log("List requested");
+
 		FileServerProvider provider = serverManager.getServerProvider();
-		Response r = provider.processLeastUsed(new ListRequest());
-		provider.getLeastUsed().getConnection().close();
+		Queue<FileServerAdapter> nr = provider.getReadQuorum();	
+		Set<String> filenames = new HashSet<String>();
+
+		// alle fileserver durchgehen und filenames mergen
+		for (FileServerAdapter fs: nr) {
+			Response r = null;
+			try {
+				r = fs.list();
+				if (r instanceof ListResponse) {
+					ListResponse lResp = (ListResponse)r;			
+					filenames.addAll(lResp.getFileNames());
+				} else {
+					log("Unexpected Response from " + fs.toString() + ": " + r.toString());
+				}
+			} catch (IOException e) {
+				log("ListRequest from " + fs.toString() + " failed: " + r.toString());
+			} finally {
+				try {
+					fs.getConnection().close();
+				} catch (IllegalStateException e){ }
+			}
+		}
+
+		ListResponse r = new ListResponse(filenames);
 		return r;
 	}
+
 
 	@Override
 	public Response download(DownloadTicketRequest request) throws IOException {
@@ -152,76 +185,116 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		log("DownloadTicket requested: '" + request.getFilename() + "'");
 		FileServerProvider provider = serverManager.getServerProvider();
 		String filename = request.getFilename();
-		long size;
-		int version;
-		InfoResponse iResp;
-		VersionResponse vResp;
-		InetAddress address;
-		int port;
-		String checksum;
 
-		FileServerAdapter usedAdapter = null;
-		Response r1;
-		Response r2;
-		// Request size and version from fileserver
+		/**
+		 * Server mit höchster Version bestimmen
+		 */
+		Queue<FileServerAdapter> nr = provider.getReadQuorum();
+		VersionRequest vReq = new VersionRequest(filename);
+		int version = 0;
+		Queue<FileServerAdapter> candidates = new ConcurrentLinkedQueue<FileServerAdapter>();		
+		for (FileServerAdapter fs: nr) {
+			Response r = null;
+			try {
+				r = fs.version(vReq);
+				if (r instanceof VersionResponse) {
+					VersionResponse vResp = (VersionResponse)r;		
+					// wenn die version groesser ist als bisherige -> alle bisherigen verwerfen & version erhöhen
+					if (vResp.getVersion() > version) {
+						version = vResp.getVersion();
+						candidates.clear();
+						candidates.add(fs);
+					}
+					// wenn version gleich ist, fileserver zu kandidaten hinzu
+					else if (vResp.getVersion() == version) {
+						candidates.add(fs);
+					}
+				} else {
+					log("Unexpected Response from " + fs.toString() + ": " + r.toString());
+				}
+			} catch (IOException e) {
+				log("VersionRequest from " + fs.toString() + " failed: " + r.toString());
+			} finally {
+				try {
+					fs.getConnection().close();
+				} catch (IllegalStateException e){ }
+			}
+		}
+
+		if (candidates.isEmpty()) {
+			throw new IOException("No fileservers available.");
+		}
+
+		/**
+		 * Server mit niedrigster Usage
+		 */
+		FileServerAdapter selectedServer = candidates.poll();
+
+		/**
+		 * Info requesten
+		 */
+		Response r;
+		InfoResponse iResp;
 		try {
-			r1 = provider.processLeastUsed(new InfoRequest(filename));
-			if (r1 instanceof MessageResponse) throw new IOException(((FailedResponse)r1).getMessage());
-			r2 = provider.processLeastUsed(new VersionRequest(filename));
-			if (r2 instanceof MessageResponse) throw new IOException(((FailedResponse)r2).getMessage());
+			r = selectedServer.info(new InfoRequest(filename));
+			if (r instanceof MessageResponse) throw new IOException(((FailedResponse)r).getMessage());
 		} catch (IOException e) {
 			throw e;
 		} finally {
 			try {
-				usedAdapter = provider.getLeastUsed();
-				usedAdapter.getConnection().close();
+				selectedServer.getConnection().close();
 			} catch (IllegalStateException e){ }
 		}
-
-		if (r1 instanceof InfoResponse && r2 instanceof VersionResponse) {
-			iResp = (InfoResponse)r1;
-			vResp = (VersionResponse)r2;
+		if (r instanceof InfoResponse) {
+			iResp = (InfoResponse)r;
 		} else {
 			throw new IOException("Illegal response by fileserver.");
 		}
 
-		// check user credits
-		size = iResp.getSize();
+		/**
+		 * Credits checken
+		 */
+		long size = iResp.getSize();
 		if (uac.checkAndChargeCredits(user, size) == false) return new FailedResponse("Not enough credits. Credits needed: " + size + "\nYou have " + user.getCredits() + " credits left.");
 		log("Charged of " + size + " credits");
 
-		// create ticket
-		version = vResp.getVersion();
-		address = provider.getLeastUsed().getConnection().getHost();
-		port = provider.getLeastUsed().getConnection().getPort();
-		checksum = util.ChecksumUtils.generateChecksum(user.getName(), filename, version, size);
+		/**
+		 * Ticket erstellen
+		 */
+		InetAddress address = provider.getLeastUsed().getConnection().getHost();
+		int port = provider.getLeastUsed().getConnection().getPort();
+		String checksum = util.ChecksumUtils.generateChecksum(user.getName(), filename, version, size);
 		DownloadTicket ticket = new DownloadTicket(user.getName(), filename, checksum, address, port);
 		log("Responding with download ticket: " + ticket.toString());
 
 		// increase usage of fileserver
-		serverManager.increaseUsage(usedAdapter.getFileServer(), size);
+		serverManager.increaseUsage(selectedServer.getFileServer(), size);
 		return new DownloadTicketResponse(ticket);
 	}
+
 
 	@Override
 	public MessageResponse upload(UploadRequest request) throws IOException {
 		if (!loggedIn) return new RefuseResponse();
 		
+		//TODO: Exception Handling für Requests
+
 		FileServerProvider provider = serverManager.getServerProvider();
-		List<FileServerAdapter> nw = provider.getWriteQuorum();
-		
-		// determine highest version of the file
+		Queue<FileServerAdapter> nr = provider.getReadQuorum();
+		Queue<FileServerAdapter> nw = provider.getWriteQuorum();
+
+		// determine highest version from Nr fileservers
 		VersionRequest vRequest = new VersionRequest(request.getFilename());
 		int highestVersion = 0;
-		for (FileServerAdapter fs: nw) {
+		for (FileServerAdapter fs: nr) {
 			Response r = fs.version(vRequest);
 			if (r instanceof VersionResponse) {
 				VersionResponse vr = (VersionResponse) r;
 				if (vr.getVersion() > highestVersion) highestVersion = vr.getVersion();
 			}
 		}
-		
-		// Upload file to Read Quorum
+
+		// Upload file to Nw fileservers
 		UploadRequest uRequest = new UploadRequest(request.getFilename(), highestVersion + 1, request.getContent());
 		long size = request.getContent().length;
 		log("Uploading '" + request.getFilename() + "' with size " + size + " to Write Quorum");	
@@ -229,12 +302,13 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 			fs.upload(uRequest);
 			log("Uploaded '" + uRequest.getFilename() + "' to " + fs.toString());	
 		}
-		
+
 		// update user's credits
 		uac.increaseCredits(user, size * 2);
 		log("Earned " + size * 2 + " credits");
 		return new MessageResponse("File successfully uploaded.\nYou now have " + user.getCredits() + " credits.");
 	}
+
 
 	@Override
 	public MessageResponse logout() throws IOException {

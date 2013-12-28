@@ -5,6 +5,7 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import server.IFileServer;
 import util.RequestMapper;
@@ -18,9 +19,13 @@ public class FileServerProvider {
 	private FileServerAdapter designated;
 	private List<FileServerAdapter> readQuorum;
 	private List<FileServerAdapter> writeQuorum;
+	private int nr;
+	private int nw;
 
-	public FileServerProvider(Queue<FileServerAdapter> q) {
+	public FileServerProvider(Queue<FileServerAdapter> q, int nr, int nw) {
 		this.q = q;
+		this.nr = nr;
+		this.nw = nw;
 	}
 
 	/**
@@ -53,10 +58,6 @@ public class FileServerProvider {
 	
 	private void determineQuorums() {
 		if (writeQuorum != null) return;
-		// Gifford's scheme
-		int n = q.size();
-		int nw = (n / 2) + 1;	
-		int nr = (n / 2);	
 		// return nw fileservers with least usage
 		ArrayList<FileServerAdapter> read = new ArrayList<FileServerAdapter>();
 		ArrayList<FileServerAdapter> write = new ArrayList<FileServerAdapter>();
@@ -71,14 +72,14 @@ public class FileServerProvider {
 		readQuorum = read;
 	}
 	
-	public List<FileServerAdapter> getWriteQuorum() {
+	public Queue<FileServerAdapter> getWriteQuorum() {
 		determineQuorums();
-		return writeQuorum;	
+		return new ConcurrentLinkedQueue<FileServerAdapter>(writeQuorum);
 	}
 	
-	public List<FileServerAdapter> getReadQuorum() {
+	public Queue<FileServerAdapter> getReadQuorum() {
 		determineQuorums();
-		return readQuorum;	
+		return new ConcurrentLinkedQueue<FileServerAdapter>(readQuorum);
 	}
 	
 	/**
