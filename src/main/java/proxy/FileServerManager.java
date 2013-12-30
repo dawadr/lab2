@@ -4,7 +4,6 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -102,12 +101,14 @@ public class FileServerManager {
 	 * @return
 	 */
 	public FileServerProvider getServerProvider() {		
+		// statisch setzen beim ersten upload (https://tuwel.tuwien.ac.at/mod/forum/discuss.php?d=46934)
 		if (!quorumsSet) {		
 			// Gifford's scheme
 			int n = servers.size();
 			nw = (n / 2) + 1;	
 			nr = (n / 2);	
 			quorumsSet = true;
+			log("Quorums set: Nr = " + nr + ", nw = " + nw);
 		}
 		
 		synchronized (servers) {

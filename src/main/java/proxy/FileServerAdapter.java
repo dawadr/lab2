@@ -99,11 +99,11 @@ public class FileServerAdapter implements IFileServer {
 	}
 
 	private void log(String message) {
-		if (log != null) log.log("[FileServerAdapter " + conn.getHost() + " Port " + conn.getPort() +  "] " + message);
+		if (log != null) log.log(toString() + " " + message);
 	}
 
 	@Override
 	public String toString() {
-		return "[FileServerAdapter " + conn.getHost() + " Port " + conn.getPort() +  "]";
+		return "[FileServerAdapter " + fileServer.getAddress().toString() + " Port " + fileServer.getPort() + "]";
 	}
 }

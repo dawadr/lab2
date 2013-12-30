@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import server.IFileServer;
 import util.RequestMapper;
 import message.Request;
 import message.Response;

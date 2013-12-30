@@ -2,14 +2,11 @@ package proxy;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import server.IFileServer;
 import util.RequestMapper;
 import net.ILogAdapter;
 import net.IServerConnectionHandler;
@@ -18,7 +15,6 @@ import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadTicketRequest;
 import message.request.InfoRequest;
-import message.request.ListRequest;
 import message.request.LoginRequest;
 import message.request.UploadRequest;
 import message.request.VersionRequest;
@@ -151,7 +147,8 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		log("List requested");
 
 		FileServerProvider provider = serverManager.getServerProvider();
-		Queue<FileServerAdapter> nr = provider.getReadQuorum();	
+		Queue<FileServerAdapter> nr = provider.getReadQuorum();
+		log("Nr fileservers: " + nr.toString());
 		Set<String> filenames = new HashSet<String>();
 
 		// alle fileserver durchgehen und filenames mergen
@@ -160,13 +157,14 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 			try {
 				r = fs.list();
 				if (r instanceof ListResponse) {
-					ListResponse lResp = (ListResponse)r;			
+					ListResponse lResp = (ListResponse)r;	
+					// addAll(): "Adds all of the elements in the specified collection to this set if they're not already present"
 					filenames.addAll(lResp.getFileNames());
 				} else {
 					log("Unexpected Response from " + fs.toString() + ": " + r.toString());
 				}
 			} catch (IOException e) {
-				log("ListRequest from " + fs.toString() + " failed: " + r.toString());
+				log("ListRequest from " + fs.toString() + " failed: " + e.toString());
 			} finally {
 				try {
 					fs.getConnection().close();
@@ -190,6 +188,7 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		 * Server mit höchster Version bestimmen
 		 */
 		Queue<FileServerAdapter> nr = provider.getReadQuorum();
+		log("Nr fileservers: " + nr.toString());
 		VersionRequest vReq = new VersionRequest(filename);
 		int version = 0;
 		Queue<FileServerAdapter> candidates = new ConcurrentLinkedQueue<FileServerAdapter>();		
@@ -213,7 +212,7 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 					log("Unexpected Response from " + fs.toString() + ": " + r.toString());
 				}
 			} catch (IOException e) {
-				log("VersionRequest from " + fs.toString() + " failed: " + r.toString());
+				log("VersionRequest from " + fs.toString() + " failed: " + e.toString());
 			} finally {
 				try {
 					fs.getConnection().close();
@@ -229,6 +228,7 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		 * Server mit niedrigster Usage
 		 */
 		FileServerAdapter selectedServer = candidates.poll();
+		log("Selected server for download: " + selectedServer.toString());
 
 		/**
 		 * Info requesten
@@ -261,8 +261,8 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		/**
 		 * Ticket erstellen
 		 */
-		InetAddress address = provider.getLeastUsed().getConnection().getHost();
-		int port = provider.getLeastUsed().getConnection().getPort();
+		InetAddress address = selectedServer.getConnection().getHost();
+		int port = selectedServer.getConnection().getPort();
 		String checksum = util.ChecksumUtils.generateChecksum(user.getName(), filename, version, size);
 		DownloadTicket ticket = new DownloadTicket(user.getName(), filename, checksum, address, port);
 		log("Responding with download ticket: " + ticket.toString());
@@ -276,21 +276,32 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 	@Override
 	public MessageResponse upload(UploadRequest request) throws IOException {
 		if (!loggedIn) return new RefuseResponse();
-		
-		//TODO: Exception Handling für Requests
 
 		FileServerProvider provider = serverManager.getServerProvider();
 		Queue<FileServerAdapter> nr = provider.getReadQuorum();
 		Queue<FileServerAdapter> nw = provider.getWriteQuorum();
+		log("Nr fileservers: " + nr.toString());
+		log("Nw fileservers: " + nw.toString());
 
 		// determine highest version from Nr fileservers
 		VersionRequest vRequest = new VersionRequest(request.getFilename());
 		int highestVersion = 0;
 		for (FileServerAdapter fs: nr) {
-			Response r = fs.version(vRequest);
-			if (r instanceof VersionResponse) {
-				VersionResponse vr = (VersionResponse) r;
-				if (vr.getVersion() > highestVersion) highestVersion = vr.getVersion();
+			Response r;
+			try {
+				r = fs.version(vRequest);
+				if (r instanceof VersionResponse) {
+					VersionResponse vr = (VersionResponse) r;
+					if (vr.getVersion() > highestVersion) highestVersion = vr.getVersion();
+				} else {
+					log("Unexpected Response from " + fs.toString() + ": " + r.toString());
+				}
+			} catch (IOException e) {
+				log("VersionRequest from " + fs.toString() + " failed: " + e.toString());
+			} finally {
+				try {
+					fs.getConnection().close();
+				} catch (IllegalStateException e){ }
 			}
 		}
 
@@ -299,8 +310,16 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		long size = request.getContent().length;
 		log("Uploading '" + request.getFilename() + "' with size " + size + " to Write Quorum");	
 		for (FileServerAdapter fs: nw) {
-			fs.upload(uRequest);
-			log("Uploaded '" + uRequest.getFilename() + "' to " + fs.toString());	
+			try {
+				fs.upload(uRequest);
+				log("Uploaded '" + uRequest.getFilename() + "' to " + fs.toString());	
+			} catch (IOException e) {
+				throw new IOException("Upload to " + fs.toString() + " failed.");
+			} finally {
+				try {
+					fs.getConnection().close();
+				} catch (IllegalStateException e){ }
+			}
 		}
 
 		// update user's credits
