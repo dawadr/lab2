@@ -2,9 +2,15 @@ package net;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
+
+import net.channel.IChannel;
+import net.channel.ObjectChannel;
+import net.channel.SecureChannelDecorator;
 
 public abstract class TcpServerConnection implements IServerConnection, ILogAdapter {
 
@@ -24,23 +30,31 @@ public abstract class TcpServerConnection implements IServerConnection, ILogAdap
 	public void run() {
 		log("Connection accepted");
 		try {
-			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
-			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
+			//			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
+			//			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
+
+			InputStream in = client.getInputStream();
+			OutputStream out = client.getOutputStream();
+
+
+			IChannel channel = new SecureChannelDecorator(new ObjectChannel());
+			channel.initialize(out, in);
+
 
 			Object inputObject;
 			Object outputObject;  
 			try {
-				while ((inputObject = in.readObject()) != null) {
+				while ((inputObject = channel.readObject()) != null) {
 					// Process input
 					outputObject = handler.process(inputObject);
-					out.writeObject(outputObject);
+					channel.writeObject(outputObject);
 					// check whether to continue or not
 					if (isClosed() || client.isClosed() || handler.breakConnection()) break;
 				}
 				log("Connection closed");
 			} catch (ClassNotFoundException e) {
 				outputObject = handler.getIllegalRequestResponse();
-				out.writeObject(outputObject);
+				channel.writeObject(outputObject);
 				log(e.toString());
 				log("Connection closed");
 			} finally {
