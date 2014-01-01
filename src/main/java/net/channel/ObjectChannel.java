@@ -6,6 +6,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
+/**
+ * 
+ * @author Alex
+ *
+ */
 public class ObjectChannel implements IChannel {
 	
 	private ObjectInputStream in;
