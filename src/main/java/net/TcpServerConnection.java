@@ -8,9 +8,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import net.channel.Base64ChannelDecorator;
 import net.channel.IChannel;
 import net.channel.ObjectChannel;
-import net.channel.SecureChannelDecorator;
 
 public abstract class TcpServerConnection implements IServerConnection, ILogAdapter {
 
@@ -37,7 +37,7 @@ public abstract class TcpServerConnection implements IServerConnection, ILogAdap
 			OutputStream out = client.getOutputStream();
 
 
-			IChannel channel = new SecureChannelDecorator(new ObjectChannel());
+			IChannel channel = new Base64ChannelDecorator(new ObjectChannel());
 			channel.initialize(out, in);
 
 

@@ -10,9 +10,9 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import net.channel.Base64ChannelDecorator;
 import net.channel.IChannel;
 import net.channel.ObjectChannel;
-import net.channel.SecureChannelDecorator;
 import message.Request;
 import message.Response;
 import message.response.RefuseResponse;
@@ -31,7 +31,7 @@ public class TcpConnection implements IConnection {
 	public TcpConnection(String host, int port) {
 		this.host = host;
 		this.port = port;
-		channel = new SecureChannelDecorator(new ObjectChannel());
+		channel = new Base64ChannelDecorator(new ObjectChannel());
 	}
 
 

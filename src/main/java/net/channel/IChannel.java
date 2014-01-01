@@ -10,8 +10,6 @@ import java.io.OutputStream;
  *
  */
 public interface IChannel {
-	
-	
 	public void initialize(OutputStream out, InputStream in) throws IOException;
 	public void writeObject(Object o) throws IOException;
 	public Object readObject() throws IOException, ClassNotFoundException;
