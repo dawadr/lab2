@@ -2,11 +2,13 @@ package server;
 
 import cli.Command;
 import cli.Shell;
+
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import proxy.ClientChannelFactory;
 import net.DatagramSender;
 import net.IDatagramSender;
 import net.ILogAdapter;
@@ -15,6 +17,7 @@ import net.IServerConnectionFactory;
 import net.IServerConnectionHandlerFactory;
 import net.TcpServer;
 import net.TcpServerConnectionFactory;
+import net.channel.IObjectChannelFactory;
 import message.response.MessageResponse;
 import util.Config;
 import util.FileManager;
@@ -66,7 +69,8 @@ public class FileServer implements Runnable {
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new FileServerHandlerFactory(fileManager);
-			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory);
+			IObjectChannelFactory channelFactory = new ChannelFactory();
+			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);
 			threadPool.execute(server);

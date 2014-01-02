@@ -11,7 +11,6 @@ import util.Serialization;
 
 public class SecureClientChannel extends ChannelDecorator {
 
-
 	private boolean initialized = false;
 
 	public SecureClientChannel(IChannel decoratedChannel) {
@@ -20,8 +19,7 @@ public class SecureClientChannel extends ChannelDecorator {
 
 
 	@Override
-	public void writeObject(Object o) throws IOException {	
-
+	public void writeBytes(byte[] data) throws IOException {
 		if (!initialized) {
 			try {
 				if (initialize() == false) {
@@ -31,22 +29,29 @@ public class SecureClientChannel extends ChannelDecorator {
 				throw new IOException("Secure channel authenitaction failed.", e);
 			}
 		}
+		super.writeBytes(data);
+	}
 
-		super.writeObject(o);
+	@Override
+	public byte[] readBytes() throws IOException {
+		if (!initialized) {
+			throw new IOException("Secure channel not yet established.");
+		}
+		return super.readBytes();
 	}
 
 
 	private boolean initialize() throws IOException, ClassNotFoundException {
 		System.out.println("Initializing secure channel");
 		String s1 = "!login";
-		DataMessage r = new DataMessage(s1.getBytes());
-		super.writeObject(r);
+		//DataMessage r = new DataMessage(s1.getBytes());
+		super.writeBytes(s1.getBytes());
 		System.out.println("Sent !login");
 
-		Object o = super.readObject();
+		Object o = super.readBytes();
 		String response = null;
-		if (o instanceof DataMessage) {
-			response = new String(((DataMessage)o).getData());
+		if (o instanceof byte[]) {
+			response = new String((byte[])o);
 		} else return false;
 
 		System.out.println("Server returns " + response);
@@ -54,20 +59,12 @@ public class SecureClientChannel extends ChannelDecorator {
 		if (!response.equals("!ok")) return false;
 
 		String s2 = "!finalize";
-		r = new DataMessage(s2.getBytes());
-		super.writeObject(r);
+		//		r = new DataMessage(s2.getBytes());
+		super.writeBytes(s2.getBytes());
 		System.out.println("Sent !finalize");
 		initialized = true;
 		return true;
 	}
-
-
-
-	@Override
-	public Object readObject() throws IOException, ClassNotFoundException {	
-		if (!initialized) {
-			throw new IOException("Secure channel not yet established.");
-		}
-		return super.readObject();
-	}
 }
+
+

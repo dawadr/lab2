@@ -1,35 +1,37 @@
 package net.channel;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 
-/**
- * 
- * @author Alex
- *
- */
-public class ObjectChannel implements IChannel {
-	
-	private ObjectInputStream in;
-	private ObjectOutputStream out;
-	
-	@Override
-	public void initialize(OutputStream out, InputStream in) throws IOException {
-		this.out = new ObjectOutputStream(out);
-		this.in = new ObjectInputStream(in);
+import java.io.IOException;
+
+import message.DataMessage;
+
+import org.bouncycastle.util.encoders.Base64;
+
+import util.Serialization;
+
+public class ObjectChannel extends ChannelDecorator implements IObjectChannel {
+
+	public ObjectChannel(IChannel decoratedChannel) {
+		super(decoratedChannel);
 	}
 
 	@Override
 	public void writeObject(Object o) throws IOException {
-		out.writeObject(o);
+		byte[] data = null;
+
+		// Objekt serialisieren
+		data = Serialization.serialize(o);
+
+		super.writeBytes(data);
 	}
 
 	@Override
 	public Object readObject() throws IOException, ClassNotFoundException {
-		return in.readObject();
+		byte[] data = super.readBytes();
+		if (data == null) return null;
+		
+		// deserialize
+		Object o = Serialization.deserialize(data);
+		return o;
 	}
-
 }

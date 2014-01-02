@@ -8,22 +8,28 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import net.channel.Base64ChannelDecorator;
+import net.channel.Base64Channel;
+import net.channel.ByteChannel;
 import net.channel.IChannel;
+import net.channel.IObjectChannel;
+import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
+import net.channel.SecureClientChannel;
 import net.channel.SecureServerChannel;
 
-public abstract class TcpServerConnection implements IServerConnection, ILogAdapter {
+public class TcpServerConnection implements IServerConnection, ILogAdapter {
 
 	private Socket client;
+	private IObjectChannelFactory channelFactory;
 	private IServerConnectionHandler handler;
 	private ILogAdapter log;
 	private boolean closed;
 
-	public TcpServerConnection(Socket client, IServerConnectionHandler handler) {
+	public TcpServerConnection(Socket client, IServerConnectionHandler handler, IObjectChannelFactory channelFactory) {
 		this.handler = handler;
 		handler.setLogAdapter(this);
 		this.client = client;
+		this.channelFactory = channelFactory;
 	}
 
 
@@ -31,16 +37,9 @@ public abstract class TcpServerConnection implements IServerConnection, ILogAdap
 	public void run() {
 		log("Connection accepted");
 		try {
-			//			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
-			//			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
-
 			InputStream in = client.getInputStream();
 			OutputStream out = client.getOutputStream();
-
-
-			IChannel channel = new SecureServerChannel(new ObjectChannel());
-			channel.initialize(out, in);
-
+			IObjectChannel channel = channelFactory.create(out, in);
 
 			Object inputObject;
 			Object outputObject;  

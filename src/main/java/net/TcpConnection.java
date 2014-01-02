@@ -10,10 +10,14 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import net.channel.Base64ChannelDecorator;
+import net.channel.Base64Channel;
+import net.channel.ByteChannel;
 import net.channel.IChannel;
+import net.channel.IObjectChannel;
+import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
 import net.channel.SecureClientChannel;
+import net.channel.SecureServerChannel;
 import message.Request;
 import message.Response;
 import message.response.RefuseResponse;
@@ -27,25 +31,26 @@ public class TcpConnection implements IConnection {
 	private OutputStream out;
 	private InputStream in;
 
-	private IChannel channel;
+	private IObjectChannelFactory channelFactory;
+	private IObjectChannel channel;
 
-	public TcpConnection(String host, int port) {
+	public TcpConnection(String host, int port, IObjectChannelFactory channelFactory) {
 		this.host = host;
 		this.port = port;
-		channel = new SecureClientChannel(new ObjectChannel());
+		this.channelFactory = channelFactory;
 	}
 
 
 	private synchronized void connect() throws IOException {
-		if (sock != null && sock.isConnected() && !sock.isClosed()) return;
+		if (sock != null && sock.isConnected() && !sock.isInputShutdown() && !sock.isOutputShutdown()) return;
 		try {
 			sock = new Socket(host, port);
 		} catch (ConnectException e) {
 			throw new ConnectException("Connection refused: " + host + " on port " + port);
 		}	
-				out = sock.getOutputStream();
-				in = sock.getInputStream();
-		channel.initialize(out, in);
+		out = sock.getOutputStream();
+		in = sock.getInputStream();
+		channel = channelFactory.create(out, in);
 	}
 
 	public synchronized Response send(Request req) throws IOException {
@@ -62,7 +67,7 @@ public class TcpConnection implements IConnection {
 		try {
 			response = channel.readObject();
 		} catch (ClassNotFoundException e) {
-			throw new IOException("Illegal response by proxy.", e);
+			throw new IOException("Illegal response by server.", e);
 		} catch (EOFException e2) {
 			return new RefuseResponse("Server disconnected.");
 			//			throw new IOException("Server closed connection.", e2);
@@ -70,7 +75,7 @@ public class TcpConnection implements IConnection {
 		if (response instanceof Response) {
 			return (Response) response;
 		} else {
-			throw new IOException("Illegal response by proxy.");
+			throw new IOException("Illegal response by server.");
 		}
 	}
 

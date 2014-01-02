@@ -12,19 +12,15 @@ public abstract class ChannelDecorator implements IChannel {
         this.decoratedChannel = decoratedChannel;
     }
 	
+
 	@Override
-	public void initialize(OutputStream out, InputStream in) throws IOException {
-		decoratedChannel.initialize(out, in);
+	public void writeBytes(byte[] data) throws IOException {
+		decoratedChannel.writeBytes(data);
 	}
 
 	@Override
-	public void writeObject(Object o) throws IOException {
-		decoratedChannel.writeObject(o);
-	}
-
-	@Override
-	public Object readObject() throws IOException, ClassNotFoundException {
-		return decoratedChannel.readObject();
+	public byte[] readBytes() throws IOException {
+		return decoratedChannel.readBytes();
 	}
 
 }

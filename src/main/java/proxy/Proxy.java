@@ -17,6 +17,7 @@ import net.IServerConnectionFactory;
 import net.IServerConnectionHandlerFactory;
 import net.TcpServer;
 import net.TcpServerConnectionFactory;
+import net.channel.IObjectChannelFactory;
 import message.Response;
 import message.response.FileServerInfoResponse;
 import message.response.MessageResponse;
@@ -95,7 +96,8 @@ public class Proxy implements Runnable {
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
-			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory);
+			IObjectChannelFactory channelFactory = new ClientChannelFactory();
+			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);
 			threadPool.execute(server);

@@ -49,7 +49,7 @@ public class Client implements Runnable {
 	@Override
 	public void run() {
 		fileManager = new FileManager(config.getString("download.dir"));
-		connection = new TcpConnection(config.getString("proxy.host"), config.getInt("proxy.tcp.port"));
+		connection = new TcpConnection(config.getString("proxy.host"), config.getInt("proxy.tcp.port"), new ProxyChannelFactory());
 		proxy = new ProxyAdapter(connection);
 		this.shell.run();
 	}
@@ -107,7 +107,7 @@ public class Client implements Runnable {
 			// prepare download from fileserver
 			InetAddress host = ticket.getAddress();
 			int port = ticket.getPort();
-			IConnection fsCon = new TcpConnection(host.getHostAddress(), port);
+			IConnection fsCon = new TcpConnection(host.getHostAddress(), port, new FileserverChannelFactory());
 			IFileServer fsAdapter = new FileServerAdapter(fsCon);
 
 			// download file

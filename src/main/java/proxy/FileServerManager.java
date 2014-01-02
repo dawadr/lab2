@@ -157,7 +157,7 @@ public class FileServerManager {
 	private FileServerAdapter getAdapter(FileServer server) {
 		synchronized (adapters) {
 			if (adapters.containsKey(server)) return adapters.get(server);
-			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort());
+			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new FileserverChannelFactory());
 			FileServerAdapter a = new FileServerAdapter(c, server, log);
 			adapters.put(server, a);
 			return a;	
