@@ -18,6 +18,7 @@ public class KeyProvider {
 
 	public KeyProvider(String directory) {
 		this.directory = directory;
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
 
@@ -30,12 +31,11 @@ public class KeyProvider {
 	}
 
 	public PrivateKey getPrivateKey(String name, final String password) throws IOException {
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		String pathToPrivateKey = directory + "/" + name + ".pem";
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
 			public char[] getPassword() {
-				return "12345".toCharArray();
+				return password.toCharArray();
 			}
 		});
 		KeyPair keyPair = (KeyPair) in.readObject(); 

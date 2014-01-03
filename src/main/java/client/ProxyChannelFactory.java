@@ -16,12 +16,20 @@ import net.channel.ObjectChannel;
 
 public class ProxyChannelFactory implements IObjectChannelFactory {
 
+	PrivateKey privateKey;
+	PublicKey publicKey;
+	String username;
+	
+	public ProxyChannelFactory(String username, PrivateKey privateKey, PublicKey publicKey) {
+		this.privateKey = privateKey;
+		this.publicKey = publicKey;
+		this.username = username;
+	}
+
+	
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
-		KeyProvider kp = new KeyProvider("keys");
-		PrivateKey prk = kp.getPrivateKey("alice", "12345");
-		PublicKey puk = kp.getPublicKey("proxy.pub");
-		return new ObjectChannel(new SecureClientChannel(new Base64Channel(new ByteChannel(out, in)), "alice", prk, puk));
+		return new ObjectChannel(new SecureClientChannel(new Base64Channel(new ByteChannel(out, in)), username, privateKey, publicKey));
 	}
 
 }

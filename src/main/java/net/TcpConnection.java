@@ -101,7 +101,7 @@ public class TcpConnection implements IConnection {
 
 	@Override
 	public synchronized boolean isClosed() {
-		return sock.isClosed();
+		return sock == null || sock.isClosed();
 	}
 
 }

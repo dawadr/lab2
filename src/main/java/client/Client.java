@@ -2,6 +2,7 @@ package client;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.PublicKey;
 
 import net.IConnection;
 import net.TcpConnection;
@@ -22,6 +23,7 @@ import cli.Shell;
 import server.IFileServer;
 import util.Config;
 import util.FileManager;
+import util.KeyProvider;
 import util.RequestMapper;
 
 public class Client implements Runnable {
@@ -30,8 +32,8 @@ public class Client implements Runnable {
 	private Shell shell;
 	private IClientCli cli;
 	private IProxy proxy;
-	private IConnection connection;
 	private FileManager fileManager;
+	private KeyProvider keyProvider;
 
 	public static void main(String... args) {
 		String config = "client";
@@ -49,8 +51,14 @@ public class Client implements Runnable {
 	@Override
 	public void run() {
 		fileManager = new FileManager(config.getString("download.dir"));
-		connection = new TcpConnection(config.getString("proxy.host"), config.getInt("proxy.tcp.port"), new ProxyChannelFactory());
-		proxy = new ProxyAdapter(connection);
+		keyProvider = new KeyProvider(config.getString("keys.dir"));
+		PublicKey publicKey;
+		try {
+			publicKey = keyProvider.getPublicKey("proxy.pub");
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		proxy = new ProxyAdapter(config.getString("proxy.host"), config.getInt("proxy.tcp.port"), keyProvider, publicKey);
 		this.shell.run();
 	}
 
@@ -148,7 +156,6 @@ public class Client implements Runnable {
 				logout();
 			} catch (Exception e) {
 			}
-			connection.close();
 			shell.close();
 			System.in.close();
 			return new MessageResponse("Shutting down. Bye-bye");
