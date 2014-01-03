@@ -9,11 +9,11 @@ import org.bouncycastle.util.encoders.Base64;
 
 import util.Serialization;
 
-public class SecureClientChannel extends ChannelDecorator {
+public class _SecureClientChannel extends ChannelDecorator {
 
 	private boolean initialized = false;
 
-	public SecureClientChannel(IChannel decoratedChannel) {
+	public _SecureClientChannel(IChannel decoratedChannel) {
 		super(decoratedChannel);
 	}
 
