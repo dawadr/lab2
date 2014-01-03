@@ -14,24 +14,24 @@ import org.bouncycastle.openssl.PEMReader;
 
 public class KeyProvider {
 
-	private String directory;
+	private String userKeysPath;
 
-	public KeyProvider(String directory) {
-		this.directory = directory;
+	public KeyProvider(String userKeysPath) {
+		this.userKeysPath = userKeysPath;
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
 
-	public PublicKey getPublicKey(String name) throws IOException {
-		String pathToPublicKey = directory + "/" + name + ".pem";
+	public PublicKey getPublicUserKey(String username) throws IOException {
+		String pathToPublicKey = userKeysPath + "/" + username + ".pub.pem";
 		PEMReader in = new PEMReader(new FileReader(pathToPublicKey)); 
 		PublicKey publicKey = (PublicKey) in.readObject();
 		in.close();
 		return publicKey;
 	}
 
-	public PrivateKey getPrivateKey(String name, final String password) throws IOException {
-		String pathToPrivateKey = directory + "/" + name + ".pem";
+	public PrivateKey getPrivateUserKey(String name, final String password) throws IOException {
+		String pathToPrivateKey = userKeysPath + "/" + name + ".pem";
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
 			public char[] getPassword() {
@@ -43,5 +43,27 @@ public class KeyProvider {
 		in.close();
 		return privateKey;
 	}
-
+	
+	public PublicKey getPublicKey(String location) throws IOException {
+		String pathToPublicKey = location;
+		PEMReader in = new PEMReader(new FileReader(pathToPublicKey)); 
+		PublicKey publicKey = (PublicKey) in.readObject();
+		in.close();
+		return publicKey;
+	}
+	
+	public PrivateKey getPrivateKey(String location, final String password) throws IOException {
+		String pathToPrivateKey = location;
+		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
+			@Override
+			public char[] getPassword() {
+				return password.toCharArray();
+			}
+		});
+		KeyPair keyPair = (KeyPair) in.readObject(); 
+		PrivateKey privateKey = keyPair.getPrivate();
+		in.close();
+		return privateKey;
+	}
+	
 }

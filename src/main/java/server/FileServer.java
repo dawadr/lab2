@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import proxy.ClientChannelFactory;
 import net.DatagramSender;
 import net.IDatagramSender;
 import net.ILogAdapter;

@@ -52,13 +52,13 @@ public class Client implements Runnable {
 	public void run() {
 		fileManager = new FileManager(config.getString("download.dir"));
 		keyProvider = new KeyProvider(config.getString("keys.dir"));
-		PublicKey publicKey;
+		PublicKey proxyPublicKey;
 		try {
-			publicKey = keyProvider.getPublicKey("proxy.pub");
+			proxyPublicKey = keyProvider.getPublicKey(config.getString("proxy.key"));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		proxy = new ProxyAdapter(config.getString("proxy.host"), config.getInt("proxy.tcp.port"), keyProvider, publicKey);
+		proxy = new ProxyAdapter(config.getString("proxy.host"), config.getInt("proxy.tcp.port"), keyProvider, proxyPublicKey);
 		this.shell.run();
 	}
 
@@ -71,9 +71,9 @@ public class Client implements Runnable {
 
 		@Override
 		@Command
-		public LoginResponse login(String username, String password) throws IOException {
+		public Response login(String username, String password) throws IOException {
 			LoginRequest req = new LoginRequest(username, password);
-			LoginResponse r = proxy.login(req);	
+			Response r = proxy.login(req);	
 			return r;
 		}
 

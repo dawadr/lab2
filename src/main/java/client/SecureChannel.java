@@ -19,7 +19,7 @@ import org.bouncycastle.util.encoders.Base64;
 
 import util.Serialization;
 
-public class SecureClientChannel extends ChannelDecorator {
+public class SecureChannel extends ChannelDecorator {
 
 	private boolean initialized = false;
 	private PrivateKey privateKey;
@@ -28,7 +28,7 @@ public class SecureClientChannel extends ChannelDecorator {
 	private RSAChannel rsa;
 	private AESChannel aes;
 
-	public SecureClientChannel(IChannel decoratedChannel, String user, PrivateKey privateKey, PublicKey publicKey) {
+	public SecureChannel(IChannel decoratedChannel, String user, PrivateKey privateKey, PublicKey publicKey) {
 		super(decoratedChannel);
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;

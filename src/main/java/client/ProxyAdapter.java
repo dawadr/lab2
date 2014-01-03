@@ -11,6 +11,7 @@ import proxy.IProxy;
 import util.KeyProvider;
 import message.Response;
 import message.request.*;
+import message.response.FailedResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
 
@@ -36,19 +37,29 @@ public class ProxyAdapter implements IProxy {
 	}
 
 	@Override
-	public LoginResponse login(LoginRequest request) throws IOException {
+	public Response login(LoginRequest request) throws IOException {
 		if (connected()) conn.close();
 
-		String username = request.getUsername();
-		String password = request.getPassword();
-		PrivateKey privateKey = keyProvider.getPrivateKey(username, password);
+		try {
+			String username = request.getUsername();
+			String password = request.getPassword();
+			PrivateKey privateKey;
+			try {
+				 privateKey = keyProvider.getPrivateUserKey(username, password);
+			} catch (IOException e) {
+				throw new IOException("Wrong username or password.", e);
+			}
+		
+			SecureChannelFactory channelFactory = new SecureChannelFactory(username, privateKey, publicKey);
+			conn = new TcpConnection(host, port, channelFactory);
 
-		ProxyChannelFactory channelFactory = new ProxyChannelFactory(username, privateKey, publicKey);
-		conn = new TcpConnection(host, port, channelFactory);
-
-		Response r = conn.send(request);
-		if (!(r instanceof LoginResponse)) throw new IOException("Illegal response by proxy.");
-		return (LoginResponse)r;	
+			Response r = conn.send(request);
+			if (!(r instanceof LoginResponse)) throw new IOException("Illegal response by proxy.");
+			return (LoginResponse)r;	
+		} catch (IOException e) {
+			if (conn != null) conn.close();
+			return new FailedResponse("Authentication failed: " + e.getMessage());
+		}
 	}
 
 	@Override

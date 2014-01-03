@@ -14,13 +14,13 @@ import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
 
-public class ProxyChannelFactory implements IObjectChannelFactory {
+public class SecureChannelFactory implements IObjectChannelFactory {
 
 	PrivateKey privateKey;
 	PublicKey publicKey;
 	String username;
 	
-	public ProxyChannelFactory(String username, PrivateKey privateKey, PublicKey publicKey) {
+	public SecureChannelFactory(String username, PrivateKey privateKey, PublicKey publicKey) {
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
 		this.username = username;
@@ -29,7 +29,7 @@ public class ProxyChannelFactory implements IObjectChannelFactory {
 	
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
-		return new ObjectChannel(new SecureClientChannel(new Base64Channel(new ByteChannel(out, in)), username, privateKey, publicKey));
+		return new ObjectChannel(new SecureChannel(new Base64Channel(new ByteChannel(out, in)), username, privateKey, publicKey));
 	}
 
 }

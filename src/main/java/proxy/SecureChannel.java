@@ -22,18 +22,18 @@ import org.bouncycastle.util.encoders.Base64;
 import util.KeyProvider;
 import util.Serialization;
 
-public class SecureServerChannel extends ChannelDecorator {
+public class SecureChannel extends ChannelDecorator {
 
 	private boolean initialized = false;
 	private PrivateKey privateKey;
+	private KeyProvider keyProvider;
 	private RSAChannel rsa;
 	private AESChannel aes;
-	private Uac uac;
 
-	public SecureServerChannel(IChannel decoratedChannel, PrivateKey privateKey, Uac uac) {
+	public SecureChannel(IChannel decoratedChannel, PrivateKey privateKey, KeyProvider keyProvider) {
 		super(decoratedChannel);
 		this.privateKey = privateKey;
-		this.uac = uac;
+		this.keyProvider = keyProvider;
 	}
 
 
@@ -62,7 +62,7 @@ public class SecureServerChannel extends ChannelDecorator {
 		System.out.println("Waiting for handshake");
 
 		// rsa channel erstellen
-		this.rsa = new RSAChannel(decoratedChannel, null, privateKey);
+		this.rsa = new RSAChannel(decoratedChannel, null, privateKey); // public key des users noch nicht bekannt -> null
 
 
 		/**
@@ -112,16 +112,8 @@ public class SecureServerChannel extends ChannelDecorator {
 		/**
 		 * RSA neu initialisieren
 		 */
-		// user authentifizieren & Rsa mit public key initialisieren
-		//		PublicKey key;
-		//		try {
-		//			key = uac.authenticate(username);
-		//		} catch (UacException e) {
-		//			throw new IOException(e);
-		//		}
-		KeyProvider kp = new KeyProvider("keys");
-		PublicKey puk = kp.getPublicKey("alice.pub");
-		this.rsa = new RSAChannel(decoratedChannel, puk, privateKey);
+		PublicKey publicKey = keyProvider.getPublicUserKey(username);
+		this.rsa = new RSAChannel(decoratedChannel, publicKey, privateKey);
 
 
 		/**

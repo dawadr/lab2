@@ -13,15 +13,19 @@ import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
 
+public class SecureChannelFactory implements IObjectChannelFactory {
 
-public class ClientChannelFactory implements IObjectChannelFactory {
-
+	private KeyProvider keyProvider;
+	private PrivateKey privateKey;
+	
+	public SecureChannelFactory(KeyProvider keyProvider, PrivateKey privateKey) {
+		this.keyProvider = keyProvider;
+		this.privateKey = privateKey;
+	}
+	
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
-		
-		KeyProvider kp = new KeyProvider("keys");
-		PrivateKey prk = kp.getPrivateKey("proxy", "12345");
-		return new ObjectChannel(new SecureServerChannel(new Base64Channel(new ByteChannel(out, in)), prk, null));
+		return new ObjectChannel(new SecureChannel(new Base64Channel(new ByteChannel(out, in)), privateKey, keyProvider));
 	}
 
 }

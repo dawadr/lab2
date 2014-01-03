@@ -27,7 +27,7 @@ public interface IProxy {
 	 * @return status whether the authentication was successful or not
 	 * @throws IOException if an I/O error occurs
 	 */
-	LoginResponse login(LoginRequest request) throws IOException;
+	Response login(LoginRequest request) throws IOException;
 
 	/**
 	 * Retrieves the current amount of credits of the authenticated user.

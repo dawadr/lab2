@@ -23,6 +23,7 @@ import message.response.FileServerInfoResponse;
 import message.response.MessageResponse;
 import message.response.UserInfoResponse;
 import util.Config;
+import util.KeyProvider;
 
 public class Proxy implements Runnable {
 
@@ -34,6 +35,7 @@ public class Proxy implements Runnable {
 	private IServer server;
 	private IDatagramReceiver datagramReceiver;
 	private FileServerManager fileServerManager;
+	private KeyProvider keyProvider;
 	private Uac uac;
 
 	public static void main(String... args) {
@@ -92,11 +94,15 @@ public class Proxy implements Runnable {
 		// Start fileServerManager
 		fileServerManager = new FileServerManager(datagramReceiver, config.getInt("fileserver.checkPeriod"), config.getInt("fileserver.timeout"), log);	
 		fileServerManager.start();
+		
+		//KeyProvider
+		keyProvider = new KeyProvider(config.getString("keys.dir"));
 
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
-			IObjectChannelFactory channelFactory = new ClientChannelFactory();
+			// TODO: Passwort nicht hardcodieren!!!!!
+			IObjectChannelFactory channelFactory = new SecureChannelFactory(keyProvider, keyProvider.getPrivateKey(config.getString("key"), "12345"));
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);
