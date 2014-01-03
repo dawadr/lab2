@@ -3,18 +3,17 @@ package net.channel;
 
 import java.io.IOException;
 
-import message.DataMessage;
 import message.response.FailedResponse;
 
 import org.bouncycastle.util.encoders.Base64;
 
 import util.Serialization;
 
-public class SecureServerChannel extends ChannelDecorator {
+public class _SecureServerChannel extends ChannelDecorator {
 
 	private boolean initialized = false;
 
-	public SecureServerChannel(IChannel decoratedChannel) {
+	public _SecureServerChannel(IChannel decoratedChannel) {
 		super(decoratedChannel);
 	}
 

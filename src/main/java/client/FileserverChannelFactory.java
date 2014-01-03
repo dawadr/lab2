@@ -9,7 +9,6 @@ import net.channel.ByteChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
-import net.channel.SecureClientChannel;
 
 public class FileserverChannelFactory implements IObjectChannelFactory {
 

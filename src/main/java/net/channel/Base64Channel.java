@@ -2,7 +2,6 @@ package net.channel;
 
 
 import java.io.IOException;
-import message.DataMessage;
 
 import org.bouncycastle.util.encoders.Base64;
 

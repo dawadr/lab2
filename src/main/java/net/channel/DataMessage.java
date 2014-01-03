@@ -1,9 +1,9 @@
-package message;
+package net.channel;
 
 import java.io.Serializable;
 
 /**
- * Ein DTO das serialsierte/verschlüsselte/codierte Responses/Requests enthält.
+ * Ein DTO das serialsierte/verschlüsselte/codierte Daten enthält.
  * @author Alex
  *
  */

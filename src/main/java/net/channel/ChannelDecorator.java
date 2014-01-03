@@ -6,7 +6,7 @@ import java.io.OutputStream;
 
 public abstract class ChannelDecorator implements IChannel {
 
-	private IChannel decoratedChannel;
+	protected IChannel decoratedChannel;
 	
 	public ChannelDecorator (IChannel decoratedChannel) {
         this.decoratedChannel = decoratedChannel;

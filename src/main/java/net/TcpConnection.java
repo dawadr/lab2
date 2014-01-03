@@ -16,8 +16,7 @@ import net.channel.IChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
-import net.channel.SecureClientChannel;
-import net.channel.SecureServerChannel;
+
 import message.Request;
 import message.Response;
 import message.response.RefuseResponse;
@@ -42,7 +41,7 @@ public class TcpConnection implements IConnection {
 
 
 	private synchronized void connect() throws IOException {
-		if (sock != null && sock.isConnected() && !sock.isInputShutdown() && !sock.isOutputShutdown()) return;
+		if (sock != null && sock.isConnected() && !sock.isClosed() && !sock.isOutputShutdown()) return;
 		try {
 			sock = new Socket(host, port);
 		} catch (ConnectException e) {

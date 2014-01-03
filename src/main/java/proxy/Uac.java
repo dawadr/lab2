@@ -1,5 +1,6 @@
 package proxy;
 
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,17 @@ public class Uac {
 		}
 		throw new UacException("Invalid username or password.");
 	}
+	
+	
+	public synchronized PublicKey authenticate(String username) throws UacException {
+		if (username == null || username.isEmpty()) throw new IllegalArgumentException();
+		if (users.containsKey(username)) {
+			UserSessions u = users.get(username);
+			return null;
+		}
+		throw new UacException("Invalid username.");
+	}
+	
 
 	/**
 	 * Logs out a user

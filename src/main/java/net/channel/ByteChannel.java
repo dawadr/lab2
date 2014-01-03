@@ -16,25 +16,33 @@ import java.io.PrintWriter;
  */
 public class ByteChannel implements IChannel {
 
-	private PrintWriter out;
-	private BufferedReader in;
+	private ObjectOutputStream out;
+	private ObjectInputStream in;
 
-	public ByteChannel(OutputStream out, InputStream in) {
-		this.out = new PrintWriter(out, true);
-		this.in  = new BufferedReader(new InputStreamReader(in));
+	public ByteChannel(OutputStream out, InputStream in) throws IOException {
+		this.out = new ObjectOutputStream(out);
+		this.in  = new ObjectInputStream((in));
 	}
 
 
 	@Override
 	public void writeBytes(byte[] data) throws IOException {
-		out.println(new String(data));
-		//out.writeObject(o);
+		out.writeObject(new DataMessage(data));;
 	}
 
 	@Override
 	public byte[] readBytes() throws IOException {
-		return in.readLine().getBytes();
-		//return in.readObject();
+		Object o;
+		try {
+			o = in.readObject();
+		} catch (ClassNotFoundException e) {
+			throw new IOException(e);
+		}
+		if (o == null) return null;
+		DataMessage msg = null;
+		if (o instanceof DataMessage) msg = (DataMessage)o;
+		else throw new IOException("Receiving data failed");
+		return msg.getData();
 	}
 
 }

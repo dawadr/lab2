@@ -14,8 +14,7 @@ import net.channel.IChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
-import net.channel.SecureClientChannel;
-import net.channel.SecureServerChannel;
+
 
 public class TcpServerConnection implements IServerConnection, ILogAdapter {
 
