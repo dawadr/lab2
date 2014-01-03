@@ -21,7 +21,7 @@ public class ClientChannelFactory implements IObjectChannelFactory {
 		
 		KeyProvider kp = new KeyProvider("keys");
 		PrivateKey prk = kp.getPrivateKey("proxy", "12345");
-		
+		System.out.println("private key entschluesselt");
 		return new ObjectChannel(new SecureServerChannel(new Base64Channel(new ByteChannel(out, in)), prk, null));
 	}
 

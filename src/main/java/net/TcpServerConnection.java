@@ -35,11 +35,22 @@ public class TcpServerConnection implements IServerConnection, ILogAdapter {
 	@Override
 	public void run() {
 		log("Connection accepted");
-		try {
-			InputStream in = client.getInputStream();
-			OutputStream out = client.getOutputStream();
-			IObjectChannel channel = channelFactory.create(out, in);
 
+		InputStream in;
+		OutputStream out;
+		IObjectChannel channel;
+		try {
+			in = client.getInputStream();
+			out = client.getOutputStream();
+			channel = channelFactory.create(out, in);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			return;
+		}
+
+
+		try {
 			Object inputObject;
 			Object outputObject;  
 			try {

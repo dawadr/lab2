@@ -35,7 +35,7 @@ public class KeyProvider {
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
 			public char[] getPassword() {
-				return password.toCharArray();
+				return "12345".toCharArray();
 			}
 		});
 		KeyPair keyPair = (KeyPair) in.readObject(); 

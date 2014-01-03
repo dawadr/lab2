@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 
 import net.channel.AESChannel;
 import net.channel.ChannelDecorator;
@@ -59,22 +60,36 @@ public class SecureServerChannel extends ChannelDecorator {
 
 	private boolean initialize() throws IOException {
 		System.out.println("Waiting for handshake");
+
 		// rsa channel erstellen
 		this.rsa = new RSAChannel(decoratedChannel, null, privateKey);
 
-		// !login lesen
+
+		/**
+		 * Message 1 lesen
+		 */
 		byte[] b = rsa.readBytes();
 		String response = new String(b);
-		System.out.println("Receiving " + response);
+		System.out.println("Received " + response);
 		// Response parsen
 		String[] parameters = response.split(" ");
-		// checken ob "!login <user> <client-challenge>."
+
+		// checken ob "!login <user> <client-challenge>"
 		if (parameters.length != 3 && !parameters[0].equals("!login")) return false;
 
 		String username = parameters[1];
-		String clientChallenge = parameters[2];
-		String proxyChallenge = "--proxyChallenge--";
-		
+		String clientChallenge_encoded = parameters[2];
+
+
+		/**
+		 * Proxy Challenge, Secret Key & IV Parameter erzeugen
+		 */	
+		// ProxyChallenge erstellen
+		SecureRandom secureRandom = new SecureRandom(); 
+		final byte[] ProxyChallenge = new byte[32]; 
+		secureRandom.nextBytes(ProxyChallenge);
+		String proxyChallenge_encoded = new String(Base64.encode(ProxyChallenge));
+
 		// Secret Key
 		KeyGenerator generator = null;
 		try {
@@ -84,16 +99,19 @@ public class SecureServerChannel extends ChannelDecorator {
 			e.printStackTrace();
 		} 
 		generator.init(256); 
-		SecretKey key = generator.generateKey(); 
-		String secretKey = new String(key.getEncoded());
-		
+		SecretKey secretKey = generator.generateKey(); 
+		String secretKey_encoded = new String(Base64.encode(secretKey.getEncoded()));
+
 		// IV parameter
-		SecureRandom secureRandom = new SecureRandom(); 
-		final byte[] number = new byte[16]; 
-		secureRandom.nextBytes(number);
-		String ivParameter = new String(number);
+		secureRandom = new SecureRandom(); 
+		final byte[] ivParameter = new byte[16]; 
+		secureRandom.nextBytes(ivParameter);
+		String ivParameter_encoded = new String(Base64.encode(ivParameter));
 
 
+		/**
+		 * RSA neu initialisieren
+		 */
 		// user authentifizieren & Rsa mit public key initialisieren
 		//		PublicKey key;
 		//		try {
@@ -105,16 +123,22 @@ public class SecureServerChannel extends ChannelDecorator {
 		PublicKey puk = kp.getPublicKey("alice.pub");
 		this.rsa = new RSAChannel(decoratedChannel, puk, privateKey);
 
-		String msg2 = "!ok " + clientChallenge + " " + proxyChallenge + " " + secretKey + " " + ivParameter;
-		//DataMessage r = new DataMessage(s1.getBytes());
+
+		/**
+		 * Message 2 senden
+		 */
+		String msg2 = "!ok " + clientChallenge_encoded + " " + proxyChallenge_encoded + " " + secretKey_encoded + " " + ivParameter_encoded;
 		rsa.writeBytes(msg2.getBytes());
 		System.out.println("Sent " + msg2);
 
-		// finish handshake by establishing AES channel
-		aes = new AESChannel(decoratedChannel, secretKey, ivParameter);
+
+		/**
+		 * AES aufbauen & Message 3 lesen
+		 */
+		aes = new AESChannel(decoratedChannel, secretKey, new IvParameterSpec(ivParameter));
 		String msg3 = new String(aes.readBytes());
-		System.out.println("Receiving " + msg3);
-		if (!msg3.equals(proxyChallenge)) return false;
+		System.out.println("Received " + msg3);
+		if (!msg3.equals(proxyChallenge_encoded)) return false;
 
 		initialized = true;
 		System.out.println("AES channel established");

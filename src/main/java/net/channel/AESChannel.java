@@ -22,23 +22,26 @@ import util.Serialization;
 
 public class AESChannel extends ChannelDecorator {
 
-	private Key secretKey;
+	private SecretKey secretKey;
 	private IvParameterSpec ivParameter;
 	
 	
 
-	public AESChannel(IChannel decoratedChannel, String secretKey, String ivParameter) {
+	public AESChannel(IChannel decoratedChannel, SecretKey secretKey, IvParameterSpec ivParameter) {
 		super(decoratedChannel);
 		
-		byte[] keyBytes = new byte[1024];
-		keyBytes = secretKey.getBytes();
-		byte[] input = Hex.decode(keyBytes);
-		// make sure to use the right ALGORITHM for what you want to do 
-		// (see text) 
-		this.secretKey = new SecretKeySpec(input, "AES/CTR/NoPadding");
+//		byte[] keyBytes = new byte[1024];
+//		keyBytes = secretKey.getBytes();
+//		byte[] input = Hex.decode(keyBytes);
+//		// make sure to use the right ALGORITHM for what you want to do 
+//		// (see text) 
+//		this.secretKey = new SecretKeySpec(input, "AES/CTR/NoPadding");
+//		
+//		byte[] iv = ivParameter.getBytes();
+//		this.ivParameter = new IvParameterSpec(iv);
 		
-		byte[] iv = ivParameter.getBytes();
-		this.ivParameter = new IvParameterSpec(iv);
+		this.secretKey = secretKey;
+		this.ivParameter = ivParameter;
 	}
 
 

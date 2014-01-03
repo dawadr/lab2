@@ -4,6 +4,10 @@ package client;
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
+
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import net.channel.AESChannel;
 import net.channel.ChannelDecorator;
@@ -61,36 +65,52 @@ public class SecureClientChannel extends ChannelDecorator {
 
 	private boolean initialize() throws IOException {
 		System.out.println("Initializing handshake");
+		
 		// rsa channel erstellen
 		this.rsa = new RSAChannel(decoratedChannel, publicKey, privateKey);
 
-		String clientChallenge = "AbcClientChallengeAbc";
+	
+		/**
+		 * Message 1 senden
+		 */		
+		// ClientChallenge erstellen
+		SecureRandom secureRandom = new SecureRandom(); 
+		final byte[] clientChallenge = new byte[32]; 
+		secureRandom.nextBytes(clientChallenge);
+		String clientChallenge_encoded = new String(Base64.encode(clientChallenge));
 
-		String msg1 = "!login " + user + " " + clientChallenge;
-		//DataMessage r = new DataMessage(s1.getBytes());
+		// Message senden
+		String msg1 = "!login " + user + " " + clientChallenge_encoded;
 		rsa.writeBytes(msg1.getBytes());
 		System.out.println("Sent " + msg1);
 
+		
+		/**
+		 * Message 2 lesen
+		 */
 		byte[] b = rsa.readBytes();
 		String response = new String(b);
-		System.out.println("Receiving " + response);
+		System.out.println("Received " + response);
 
 		// Response parsen
 		String[] parameters = response.split(" ");
 
 		// checken ob "!ok <client-challenge> ..."
-		if (parameters.length != 5 && !parameters[0].equals("!ok") && !parameters[1].equals(clientChallenge)) return false;
+		if (parameters.length != 5 && !parameters[0].equals("!ok") && !parameters[1].equals(clientChallenge_encoded)) return false;
 
-		String proxyChallenge = parameters[2];
-		String secretKey = parameters[3];
-		String ivParameter = parameters[4];
+		String proxyChallenge_encoded = parameters[2];
+		String secretKey_encoded = parameters[3];
+		String ivParameter_encoded = parameters[4];
+		byte[] secretKey = Base64.decode(secretKey_encoded.getBytes());
+		byte[] ivParameter = Base64.decode(ivParameter_encoded.getBytes());
 
 
-		// finish handshake by establishing AES channel
-		aes = new AESChannel(decoratedChannel, secretKey, ivParameter);
-		String msg3 = proxyChallenge;
-		aes.writeBytes(msg3.getBytes());
-		System.out.println("Sent " + msg3);
+		/**
+		 * AES aufbauen und Message 3 senden
+		 */
+		aes = new AESChannel(decoratedChannel, new SecretKeySpec(secretKey, "AES/CTR/NoPadding"), new IvParameterSpec(ivParameter));
+		aes.writeBytes(proxyChallenge_encoded.getBytes());
+		System.out.println("Sent " + proxyChallenge_encoded);
 
 		initialized = true;
 		System.out.println("AES channel established");
