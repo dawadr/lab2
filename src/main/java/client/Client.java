@@ -2,11 +2,16 @@ package client;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.security.PublicKey;
 
 import net.IConnection;
 import net.TcpConnection;
 import proxy.IProxy;
+import proxy.ManagementService;
 import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadFileRequest;
@@ -34,6 +39,7 @@ public class Client implements Runnable {
 	private IProxy proxy;
 	private FileManager fileManager;
 	private KeyProvider keyProvider;
+	private ManagementService managementService;
 
 	public static void main(String... args) {
 		String config = "client";
@@ -59,6 +65,24 @@ public class Client implements Runnable {
 			throw new RuntimeException(e);
 		}
 		proxy = new ProxyAdapter(config.getString("proxy.host"), config.getInt("proxy.tcp.port"), keyProvider, proxyPublicKey);
+		
+		Config mc = new Config("mc");
+		String host = mc.getString("proxy.host");
+		String name = mc.getString("binding.name");
+		int port = mc.getInt("proxy.rmi.port");
+		
+		try {
+			//managementService = (ManagementService) Naming.lookup("rmi://" + host + "/" + name);
+			Registry registry = LocateRegistry.getRegistry(host, port);
+			this.managementService = (ManagementService) registry.lookup(name);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		this.shell.run();
 	}
 
@@ -159,6 +183,41 @@ public class Client implements Runnable {
 			shell.close();
 			System.in.close();
 			return new MessageResponse("Shutting down. Bye-bye");
+		}
+		
+		@Command
+		public Response topThreeDownloads() {
+			
+			Response r = null;
+			
+			try {
+				r = managementService.getTopThree();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return r;
+		}
+		
+		@Command
+		public Response subscribe(String filename, int numberOfDownloads) {
+			
+			Response r = null;
+			
+			try {
+				r = managementService.subscribe(filename, numberOfDownloads, this);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return r;
+		}
+		
+		@Override
+		public Response notify(Response r) {
+			return r;
 		}
 	}
 

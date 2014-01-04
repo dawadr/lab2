@@ -185,7 +185,7 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		String filename = request.getFilename();
 
 		/**
-		 * Server mit höchster Version bestimmen
+		 * Server mit hï¿½chster Version bestimmen
 		 */
 		Queue<FileServerAdapter> nr = provider.getReadQuorum();
 		log("Nr fileservers: " + nr.toString());
@@ -198,7 +198,7 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 				r = fs.version(vReq);
 				if (r instanceof VersionResponse) {
 					VersionResponse vResp = (VersionResponse)r;		
-					// wenn die version groesser ist als bisherige -> alle bisherigen verwerfen & version erhöhen
+					// wenn die version groesser ist als bisherige -> alle bisherigen verwerfen & version erhï¿½hen
 					if (vResp.getVersion() > version) {
 						version = vResp.getVersion();
 						candidates.clear();
@@ -269,6 +269,10 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 
 		// increase usage of fileserver
 		serverManager.increaseUsage(selectedServer.getFileServer(), size);
+		
+		// adjust download statistics
+		DownloadStatistics.getInstance().reportDownload(filename);
+		
 		return new DownloadTicketResponse(ticket);
 	}
 

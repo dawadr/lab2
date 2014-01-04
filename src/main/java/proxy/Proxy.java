@@ -37,6 +37,7 @@ public class Proxy implements Runnable {
 	private FileServerManager fileServerManager;
 	private KeyProvider keyProvider;
 	private Uac uac;
+	private ManagementServiceServer managementServiceServer;
 
 	public static void main(String... args) {
 		String config = "proxy";
@@ -95,6 +96,10 @@ public class Proxy implements Runnable {
 		fileServerManager = new FileServerManager(datagramReceiver, config.getInt("fileserver.checkPeriod"), config.getInt("fileserver.timeout"), log);	
 		fileServerManager.start();
 		
+		// Start managementServiceServer
+		managementServiceServer = new ManagementServiceServer();
+		managementServiceServer.start();
+		
 		//KeyProvider
 		keyProvider = new KeyProvider(config.getString("keys.dir"));
 
@@ -125,6 +130,7 @@ public class Proxy implements Runnable {
 		server.stop();
 		datagramReceiver.close();
 		fileServerManager.stop();
+		managementServiceServer.stop();
 		shell.close();
 		System.in.close();
 		// Shutdown threads

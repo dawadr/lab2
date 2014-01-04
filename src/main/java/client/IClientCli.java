@@ -141,4 +141,6 @@ public interface IClientCli {
 	 * @throws IOException if an I/O error occurs
 	 */
 	MessageResponse exit() throws IOException;
+	
+	Response notify(Response r);
 }
