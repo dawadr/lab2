@@ -10,6 +10,11 @@ import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
 
+/**
+ * Erzeugt die Channel fuer die Verbindung mit den Fileservern
+ * @author Alex
+ *
+ */
 public class FileserverChannelFactory implements IObjectChannelFactory {
 
 	@Override

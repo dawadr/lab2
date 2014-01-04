@@ -7,6 +7,11 @@ import org.bouncycastle.util.encoders.Base64;
 
 import util.Serialization;
 
+/**
+ * Serialisiert/deserialisiert Objekte beim Lesen/Schreiben
+ * @author Alex
+ *
+ */
 public class ObjectChannel extends ChannelDecorator implements IObjectChannel {
 
 	public ObjectChannel(IChannel decoratedChannel) {

@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * 
+ * Erweitert IChannel um Methoden, um Objekte zu senden/empfangen
  * @author Alex
  *
  */

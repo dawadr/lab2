@@ -102,7 +102,7 @@ public class Proxy implements Runnable {
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
 			// TODO: Passwort nicht hardcodieren!!!!!
-			IObjectChannelFactory channelFactory = new SecureChannelFactory(keyProvider, keyProvider.getPrivateKey(config.getString("key"), "12345"));
+			IObjectChannelFactory channelFactory = new SecureClientChannelFactory(keyProvider, keyProvider.getPrivateKey(config.getString("key"), "12345"));
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);

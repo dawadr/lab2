@@ -33,6 +33,12 @@ public class TcpConnection implements IConnection {
 	private IObjectChannelFactory channelFactory;
 	private IObjectChannel channel;
 
+	/**
+	 * 
+	 * @param host
+	 * @param port
+	 * @param channelFactory Stellt den Channel zur Verfuegung, ueber den die Verbindung laeuft.
+	 */
 	public TcpConnection(String host, int port, IObjectChannelFactory channelFactory) {
 		this.host = host;
 		this.port = port;

@@ -14,13 +14,24 @@ import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
 
-public class SecureChannelFactory implements IObjectChannelFactory {
+/**
+ * 
+ * @author Alex
+ *
+ */
+public class SecureProxyChannelFactory implements IObjectChannelFactory {
 
 	PrivateKey privateKey;
 	PublicKey publicKey;
 	String username;
 	
-	public SecureChannelFactory(String username, PrivateKey privateKey, PublicKey publicKey) {
+	/**
+	 * Initialisiert die Factory
+	 * @param username Der User fuer den der Channel initialisiert werden soll
+	 * @param privateKey Private Key des Users
+	 * @param publicKey Public Key der Gegenstelle
+	 */
+	public SecureProxyChannelFactory(String username, PrivateKey privateKey, PublicKey publicKey) {
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
 		this.username = username;
@@ -29,7 +40,8 @@ public class SecureChannelFactory implements IObjectChannelFactory {
 	
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
-		return new ObjectChannel(new SecureChannel(new Base64Channel(new ByteChannel(out, in)), username, privateKey, publicKey));
+		// Objekte serialisieren -> verschluesseln -> Base64 codieren -> Bytes schicken
+		return new ObjectChannel(new SecureProxyChannel(new Base64Channel(new ByteChannel(out, in)), username, privateKey, publicKey));
 	}
 
 }

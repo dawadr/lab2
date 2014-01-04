@@ -24,6 +24,12 @@ public class TcpServerConnection implements IServerConnection, ILogAdapter {
 	private ILogAdapter log;
 	private boolean closed;
 
+	/**
+	 * 
+	 * @param client
+	 * @param handler
+	 * @param channelFactory Stellt den Channel zur Verfuegung, ueber den die Verbindung laeuft.
+	 */
 	public TcpServerConnection(Socket client, IServerConnectionHandler handler, IObjectChannelFactory channelFactory) {
 		this.handler = handler;
 		handler.setLogAdapter(this);
@@ -43,6 +49,7 @@ public class TcpServerConnection implements IServerConnection, ILogAdapter {
 			in = client.getInputStream();
 			out = client.getOutputStream();
 			channel = channelFactory.create(out, in);
+			channel.setLogAdapter(this);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

@@ -9,8 +9,10 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
+import net.ILogAdapter;
+
 /**
- * 
+ * Dieser Channel schreibt und liest Bytes (diese werden dabei in ein DTO gewrappt)
  * @author Alex
  *
  */
@@ -18,7 +20,14 @@ public class ByteChannel implements IChannel {
 
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
+	private ILogAdapter log;
 
+	/**
+	 * 
+	 * @param out Der OutputStream, der zum Schreiben der Daten verwendet wird.
+	 * @param in Der InputStream, der zum Lesen der Daten verwendet wird.
+	 * @throws IOException
+	 */
 	public ByteChannel(OutputStream out, InputStream in) throws IOException {
 		this.out = new ObjectOutputStream(out);
 		this.in  = new ObjectInputStream((in));
@@ -43,6 +52,16 @@ public class ByteChannel implements IChannel {
 		if (o instanceof DataMessage) msg = (DataMessage)o;
 		else throw new IOException("Receiving data failed");
 		return msg.getData();
+	}
+
+
+	@Override
+	public void setLogAdapter(ILogAdapter log) {
+		this.log = log;
+	}
+
+	protected void log(String message) {
+		if (log != null) log.log(message);
 	}
 
 }

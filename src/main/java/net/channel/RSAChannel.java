@@ -13,11 +13,22 @@ import org.bouncycastle.util.encoders.Base64;
 
 import util.Serialization;
 
+/**
+ * Ver-/entschluesselt Daten mit RSA
+ * @author Alex
+ *
+ */
 public class RSAChannel extends ChannelDecorator {
 
 	private PublicKey publicKey;
 	private PrivateKey privateKey;
 
+	/**
+	 * 
+	 * @param decoratedChannel
+	 * @param publicKey Der Public Key der Gegenstelle zum Entschluesseln der empfangenen Daten
+	 * @param privateKey Der Private Key zum Verschluesseln der gesendeten Daten
+	 */
 	public RSAChannel(IChannel decoratedChannel, PublicKey publicKey, PrivateKey privateKey) {
 		super(decoratedChannel);
 		this.publicKey = publicKey;

@@ -1,6 +1,5 @@
 package net.channel;
 
-
 import java.io.IOException;
 import java.security.AlgorithmParameters;
 import java.security.Key;
@@ -20,26 +19,19 @@ import org.bouncycastle.util.encoders.Hex;
 
 import util.Serialization;
 
+/**
+ * Ein Channel, der die Daten beim Senden mit den uebergebenen Keys AES-verschluesselt und beim Lesen wieder entschluesselt.
+ * @author Alex
+ *
+ */
 public class AESChannel extends ChannelDecorator {
 
 	private SecretKey secretKey;
 	private IvParameterSpec ivParameter;
 	
 	
-
 	public AESChannel(IChannel decoratedChannel, SecretKey secretKey, IvParameterSpec ivParameter) {
 		super(decoratedChannel);
-		
-//		byte[] keyBytes = new byte[1024];
-//		keyBytes = secretKey.getBytes();
-//		byte[] input = Hex.decode(keyBytes);
-//		// make sure to use the right ALGORITHM for what you want to do 
-//		// (see text) 
-//		this.secretKey = new SecretKeySpec(input, "AES/CTR/NoPadding");
-//		
-//		byte[] iv = ivParameter.getBytes();
-//		this.ivParameter = new IvParameterSpec(iv);
-		
 		this.secretKey = secretKey;
 		this.ivParameter = ivParameter;
 	}
@@ -62,18 +54,16 @@ public class AESChannel extends ChannelDecorator {
 	public byte[] readBytes() throws IOException {
 		byte[] data = super.readBytes();
 		if (data == null) return null;
-
 		try {
 			Cipher crypt;
 			crypt = Cipher.getInstance("AES/CTR/NoPadding");
-			crypt.init(Cipher.ENCRYPT_MODE, secretKey, ivParameter);
+			crypt.init(Cipher.DECRYPT_MODE, secretKey, ivParameter);
 			byte[] decrypted = crypt.doFinal(data);
 			return decrypted;
 		} catch (Exception e) {
 			throw new IOException(e);
 		} 
 	}
-
 
 }
 

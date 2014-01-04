@@ -1,6 +1,5 @@
 package client;
 
-
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -19,20 +18,34 @@ import org.bouncycastle.util.encoders.Base64;
 
 import util.Serialization;
 
-public class SecureChannel extends ChannelDecorator {
+/**
+ * Ein Channel, der eine sichere Verbindung zur Verfügung stellt.
+ * Die Verbindung mit dem Proxy wird gemaess spezifiziertem Handshake eigenstaendig aufgebaut.
+ * Hierzu verwendet der Channel intern RSA- und AESChannel.
+ * @author Alex
+ *
+ */
+public class SecureProxyChannel extends ChannelDecorator {
 
 	private boolean initialized = false;
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
-	private String user;
+	private String username;
 	private RSAChannel rsa;
 	private AESChannel aes;
 
-	public SecureChannel(IChannel decoratedChannel, String user, PrivateKey privateKey, PublicKey publicKey) {
+	/**
+	 * Initialisiert den Channel
+	 * @param decoratedChannel Der zu dekorierende unterliegende Channel
+	 * @param user Der User fuer den die Verbindung hergestellt wrden soll
+	 * @param privateKey Der RSA-PrivateKey des Users
+	 * @param publicKey Der RSA-PublicKey der Gegenstelle
+	 */
+	public SecureProxyChannel(IChannel decoratedChannel, String username, PrivateKey privateKey, PublicKey publicKey) {
 		super(decoratedChannel);
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
-		this.user = user;
+		this.username = username;
 	}
 
 
@@ -41,6 +54,7 @@ public class SecureChannel extends ChannelDecorator {
 		if (!initialized) {
 			try {
 				if (initialize() == false) {
+					log("Handshake failed");
 					throw new IOException("Secure channel authentication failed.");
 				}
 			} catch (IOException e) {
@@ -64,7 +78,7 @@ public class SecureChannel extends ChannelDecorator {
 
 
 	private boolean initialize() throws IOException {
-		System.out.println("Initializing handshake");
+		log("Initializing handshake");
 		
 		// rsa channel erstellen
 		this.rsa = new RSAChannel(decoratedChannel, publicKey, privateKey);
@@ -80,9 +94,9 @@ public class SecureChannel extends ChannelDecorator {
 		String clientChallenge_encoded = new String(Base64.encode(clientChallenge));
 
 		// Message senden
-		String msg1 = "!login " + user + " " + clientChallenge_encoded;
+		String msg1 = "!login " + username + " " + clientChallenge_encoded;
 		rsa.writeBytes(msg1.getBytes());
-		System.out.println("Sent " + msg1);
+		log("Sent " + msg1);
 
 		
 		/**
@@ -90,13 +104,16 @@ public class SecureChannel extends ChannelDecorator {
 		 */
 		byte[] b = rsa.readBytes();
 		String response = new String(b);
-		System.out.println("Received " + response);
+		log("Received " + response);
 
 		// Response parsen
 		String[] parameters = response.split(" ");
 
 		// checken ob "!ok <client-challenge> ..."
-		if (parameters.length != 5 && !parameters[0].equals("!ok") && !parameters[1].equals(clientChallenge_encoded)) return false;
+		if (parameters.length != 5 && !parameters[0].equals("!ok") && !parameters[1].equals(clientChallenge_encoded)) {
+			log("Invalid response");
+			return false;
+		}
 
 		String proxyChallenge_encoded = parameters[2];
 		String secretKey_encoded = parameters[3];
@@ -110,10 +127,10 @@ public class SecureChannel extends ChannelDecorator {
 		 */
 		aes = new AESChannel(decoratedChannel, new SecretKeySpec(secretKey, "AES/CTR/NoPadding"), new IvParameterSpec(ivParameter));
 		aes.writeBytes(proxyChallenge_encoded.getBytes());
-		System.out.println("Sent " + proxyChallenge_encoded);
+		log("Sent " + proxyChallenge_encoded);
 
 		initialized = true;
-		System.out.println("AES channel established");
+		log("AES channel established");
 		return true;
 	}
 }
