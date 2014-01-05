@@ -2,11 +2,9 @@ package message.response;
 
 import message.Response;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
+
+import model.File;
 
 /**
  * Lists all files available on all file servers.
@@ -25,10 +23,10 @@ import java.util.Map.Entry;
 public class TopThreeDownloadsResponse implements Response {
 	private static final long serialVersionUID = -7319020129445822795L;
 
-	private final Map<String, Integer> downloads;
+	private final List<File> downloads;
 
-	public TopThreeDownloadsResponse(Map<String, Integer> downloads) {
-		this.downloads = Collections.unmodifiableMap(new LinkedHashMap<String, Integer>(downloads));
+	public TopThreeDownloadsResponse(List<File> downloads) {
+		this.downloads = downloads;
 	}
 
 	@Override
@@ -39,14 +37,11 @@ public class TopThreeDownloadsResponse implements Response {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Top Three Downloads:").append("\n");
-		Iterator<Entry<String, Integer>> it = downloads.entrySet().iterator();
-		int i = 1;
 		
-	    while (it.hasNext()) {
-	        Map.Entry<String, Integer> pairs = (Map.Entry<String, Integer>)it.next();
-	        sb.append(i + ". ").append(pairs.getKey()).append(pairs.getValue()).append("\n");
-	        it.remove(); // avoids a ConcurrentModificationException
-	        i++;
+	    for(int i = 0; i < downloads.size(); i++) {
+	        sb.append(i+1).append(". ");
+	        sb.append(this.downloads.get(i).toString());
+	        sb.append("\n");
 	    }
 		return sb.toString();
 	}

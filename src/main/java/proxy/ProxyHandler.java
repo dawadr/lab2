@@ -272,6 +272,7 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		
 		// adjust download statistics
 		DownloadStatistics.getInstance().reportDownload(filename);
+		log("Statistics adjusted: " + DownloadStatistics.getInstance().getTopThree().toString());
 		
 		return new DownloadTicketResponse(ticket);
 	}

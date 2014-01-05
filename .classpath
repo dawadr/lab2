@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="lib/hamcrest-core-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.11.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk16-140.jar"/>
+	<classpathentry kind="src" path="/dslab"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

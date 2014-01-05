@@ -11,7 +11,6 @@ public class File implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private String name;
 	private int downloads;
-	private int downloadsUntilNotification;
 
 	public File(String name) {
 		this.name = name;
@@ -20,7 +19,6 @@ public class File implements Serializable {
 	public File(String name, int downloads) {
 		this.name = name;
 		this.downloads = downloads;
-		this.downloadsUntilNotification = downloads;
 	}
 
 	public String getName() {
@@ -40,16 +38,20 @@ public class File implements Serializable {
 	}
 	
 	public void reportDownload() {
-		this.downloadsUntilNotification--;
-	}
-
-	public int getDownloadsUntilNotification() {
-		return downloadsUntilNotification;
+		this.downloads++;
 	}
 
 	@Override
 	public String toString() {
-		return "File [name=" + name + ", downloads=" + downloads + "]";
+		return String.format("%1$-12s %2$5d", name, downloads);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof File)
+            return name.equals(((File) o).getName()); 
+        else
+            return false;	
 	}
 
 }

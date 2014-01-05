@@ -1,7 +1,6 @@
 package proxy;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -15,11 +14,12 @@ import model.File;
 public class DownloadStatistics {
 	
 	private static final DownloadStatistics INSTANCE = new DownloadStatistics();
-	private Map<String, Integer> downloads;
+	private List<File> statistics;
 	private Map<File, IClientCli> notifications;
 	 
 	private DownloadStatistics() {
-		this.downloads = new HashMap<String, Integer>();
+		this.statistics = new ArrayList<File>();
+		this.notifications = new HashMap<File, IClientCli>();
 	}
  
 	public static DownloadStatistics getInstance() {
@@ -27,14 +27,31 @@ public class DownloadStatistics {
 	}
 	
 	public synchronized void reportDownload(String filename) {
-		if(this.downloads.containsKey(filename)) {
-			int i = this.downloads.get(filename);
-			this.downloads.put(filename, ++i);
+		if(this.statistics.contains(new File(filename))) {
+			
+			int index = this.statistics.indexOf(new File(filename));
+			
+			File f = this.statistics.get(index);
+			f.reportDownload();
+			int downloads = f.getDownloads();
+			this.statistics.set(index, f);
+			
+			// Sortierung nach Downloadhaeufigkeit
+			if (index > 0) {
+				while(this.statistics.get(index - 1).getDownloads() < downloads) {
+					File temp = this.statistics.get(index - 1);
+					this.statistics.set(index - 1, f);
+					this.statistics.set(index, temp);
+					index--;
+					if(index < 1)  break;
+				}
+			}
+			
 		} else {
-			this.downloads.put(filename, 1);
+			this.statistics.add(new File(filename, 1));
 		}
 		
-		this.checkNotifications(filename);
+		//this.checkNotifications(filename);
 	}
 	
 	/*
@@ -49,10 +66,10 @@ public class DownloadStatistics {
 	        if(pair.getKey().getName().equals(filename)) {
 	        	pair.getKey().reportDownload();
 	        	
-	        	if(pair.getKey().getDownloadsUntilNotification() < 1) {
+	        	/*if(pair.getKey().getDownloadsUntilNotification() < 1) {
 	        		pair.getValue().notify(new NotificationResponse(pair.getKey()));
 	        		this.notifications.remove(pair.getKey());
-	        	}
+	        	}*/
 	        }
 	        
 	        it.remove(); // avoids a ConcurrentModificationException
@@ -68,34 +85,19 @@ public class DownloadStatistics {
 		this.notifications.put(f, cli);
 	}
 	
-	public synchronized Map<String, Integer> getTopThree() {
-		List<Integer> mapValues = new ArrayList<Integer>(downloads.values());
-		List<String> mapKeys = new ArrayList<String>(downloads.keySet());
-	    Collections.sort(mapValues);
-	    Collections.sort(mapKeys);
+	public synchronized List<File> getTopThree() {
 		
-	    HashMap<String, Integer> result = new HashMap<String, Integer>();
-		Iterator<Integer> valueIt = mapValues.iterator();
+		List<File> result = new ArrayList<File>();
+
+		int three = 3;
 		
-		while (valueIt.hasNext()) {
-			Integer val = valueIt.next();
-			Iterator<String> keyIt = mapKeys.iterator();
-
-	       	while (keyIt.hasNext()) {
-	       		String key = keyIt.next();
-
-	       		if (downloads.get(key).equals(val)){
-	       			mapKeys.remove(key);
-	       			result.put(key, val);
-	       			if(result.size() == 3) {
-	       				return result;
-	       			}
-	       			break;
-	       		}
-       		}
+		if(this.statistics.size() < three) 
+			three = this.statistics.size();
+		
+		for(int i = 0; i < three;i++) {
+			result.add(this.statistics.get(i));
 		}
 		
-		//falls weniger als 3 Elemente
 		return result;
 	}
 

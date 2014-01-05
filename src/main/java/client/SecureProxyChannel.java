@@ -19,7 +19,7 @@ import org.bouncycastle.util.encoders.Base64;
 import util.Serialization;
 
 /**
- * Ein Channel, der eine sichere Verbindung zur Verfügung stellt.
+ * Ein Channel, der eine sichere Verbindung zur Verfuegung stellt.
  * Die Verbindung mit dem Proxy wird gemaess spezifiziertem Handshake eigenstaendig aufgebaut.
  * Hierzu verwendet der Channel intern RSA- und AESChannel.
  * @author Alex

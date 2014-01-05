@@ -3,7 +3,7 @@ package net.channel;
 import java.io.Serializable;
 
 /**
- * Ein DTO das serialsierte/verschlüsselte/codierte Daten enthält.
+ * Ein DTO das serialsierte/verschluesselte/codierte Daten enthaelt.
  * @author Alex
  *
  */

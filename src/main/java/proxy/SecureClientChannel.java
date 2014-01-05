@@ -23,7 +23,7 @@ import util.KeyProvider;
 import util.Serialization;
 
 /**
- * Ein Channel, der eine sichere Verbindung mit dem Client zur Verfügung stellt.
+ * Ein Channel, der eine sichere Verbindung mit dem Client zur Verfuegung stellt.
  * Die Verbindung wird gemaess spezifiziertem Handshake-Protokoll initialisiert.
  * Hierzu verwendet der Channel intern RSA- und AESChannel.
  * @author Alex
