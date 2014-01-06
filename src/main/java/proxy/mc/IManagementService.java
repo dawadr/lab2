@@ -1,12 +1,11 @@
-package proxy;
+package proxy.mc;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import client.INotifyCallback;
 import message.Response;
 
-public interface ManagementService extends Remote {
+public interface IManagementService extends Remote {
 	
 	public int getReadQuorum() throws RemoteException;
 	

@@ -1,4 +1,4 @@
-package proxy;
+package proxy.mc;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -13,10 +13,9 @@ public class ManagementServiceServer {
 	private int port;
 	private String name;
 	private ILogAdapter log;
-	private ManagementService ms;
+	private IManagementService ms;
 	
-	public ManagementServiceServer() {
-		
+	public ManagementServiceServer() {	
 		Config mc = new Config("mc");
 		this.port = mc.getInt("proxy.rmi.port");
 		this.name = mc.getString("binding.name");
@@ -29,11 +28,9 @@ public class ManagementServiceServer {
 		
 	}
 	
-	public void start() {
-		
-		try {
-			
-			ManagementService obj = (ManagementService) UnicastRemoteObject.exportObject(ms, 0);
+	public void start() {	
+		try {			
+			IManagementService obj = (IManagementService) UnicastRemoteObject.exportObject(ms, 0);
 			Registry registry = LocateRegistry.createRegistry(port);
 			registry.bind(this.name, obj);
 			log("ManagementServiceServer running");
@@ -52,17 +49,13 @@ public class ManagementServiceServer {
 		this.log = log;
 	}
 	
-	public void stop() {
-		
-		try {
-			
+	public void stop() {	
+		try {		
 			UnicastRemoteObject.unexportObject(ms, true);
-			log("ManagementServiceServer stopped");
-			
+			log("ManagementServiceServer stopped");	
 		} catch (Exception e) {
 			log("stop failed: " + e); 
-		}
-		
+		}	
 	}
 	
 }

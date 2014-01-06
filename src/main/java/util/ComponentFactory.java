@@ -29,7 +29,7 @@ public class ComponentFactory {
 	 * @throws Exception if an exception occurs
 	 */
 	public IClientCli startClient(Config config, Shell shell) throws Exception {
-		Client client = new Client(config, shell);
+		Client client = new Client(config, new Config("mc"), shell);
 		threadPool.execute(client);
 		return client.getCli();
 	}

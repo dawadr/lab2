@@ -1,9 +1,10 @@
 package proxy;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import client.INotifyCallback;
+import proxy.mc.INotifyCallback;
 import message.response.NotificationResponse;
 import model.DownloadInfo;
 import model.DownloadSubscription;
@@ -65,7 +66,12 @@ public class DownloadStatistics {
 					ds.reportDownload();
 					
 					if(ds.getDownloadsUntilNotification() == 0) {
-						ds.getNotifyCallback().notify(new NotificationResponse(ds.getFilename(), ds.getNotificationInterval()));
+						try {
+							ds.getNotifyCallback().notify(new NotificationResponse(ds.getFilename(), ds.getNotificationInterval()));
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						ds.resetDownloadsUntilNotification();
 					}
 					

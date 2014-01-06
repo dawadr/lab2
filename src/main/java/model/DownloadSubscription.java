@@ -2,7 +2,7 @@ package model;
 
 import java.io.Serializable;
 
-import client.INotifyCallback;
+import proxy.mc.INotifyCallback;
 
 public class DownloadSubscription implements Serializable {
 

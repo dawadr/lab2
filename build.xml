@@ -76,6 +76,7 @@
 	<target name="run-client" depends="compile" description="Run client.">
 		<java classname="client.Client" fork="true" classpathref="project.classpath">
 			<arg value="client"/>
+			<arg value="mc"/>
 		</java>
 	</target>
 

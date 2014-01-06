@@ -13,7 +13,8 @@ import net.IConnection;
 import net.ILogAdapter;
 import net.TcpConnection;
 import proxy.IProxy;
-import proxy.ManagementService;
+import proxy.mc.IManagementService;
+import proxy.mc.INotifyCallback;
 import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadFileRequest;
@@ -35,23 +36,29 @@ import util.RequestMapper;
 
 public class Client implements Runnable {
 
-	private Config config;
+	private Config clientConfig;
+	private Config mcConfig;
 	private Shell shell;
 	private IClientCli cli;
 	private IProxy proxy;
 	private FileManager fileManager;
 	private KeyProvider keyProvider;
-	private ManagementService managementService;
+	private IManagementService managementService;
 	private INotifyCallback notifyCallback;
 
 	public static void main(String... args) {
-		String config = "client";
-		if (args.length > 0) config = args[0];
-		new Client(new Config(config), new Shell(config, System.out, System.in)).run();
+		String client = "client";
+		String mc = "mc";
+		if (args.length > 1) {
+			client = args[0];
+			mc = args[1];
+		}
+		new Client(new Config(client), new Config(mc), new Shell(client, System.out, System.in)).run();
 	}
 
-	public Client(Config config, Shell shell) {	
-		this.config = config;
+	public Client(Config clientConfig, Config mcConfig, Shell shell) {	
+		this.clientConfig = clientConfig;
+		this.mcConfig = mcConfig;
 		this.shell = shell;
 		this.cli = new ClientCli();
 		this.shell.register(cli); 
@@ -59,47 +66,38 @@ public class Client implements Runnable {
 
 	@Override
 	public void run() {
-		fileManager = new FileManager(config.getString("download.dir"));
-		keyProvider = new KeyProvider(config.getString("keys.dir"));
+		fileManager = new FileManager(clientConfig.getString("download.dir"));
+		keyProvider = new KeyProvider(clientConfig.getString("keys.dir"));
+			
+		// Init ProxyAdapter
 		PublicKey proxyPublicKey;
 		try {
-			proxyPublicKey = keyProvider.getPublicKey(config.getString("proxy.key"));
+			proxyPublicKey = keyProvider.getPublicKey(clientConfig.getString("proxy.key"));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		proxy = new ProxyAdapter(config.getString("proxy.host"), config.getInt("proxy.tcp.port"), keyProvider, proxyPublicKey);
-		
-		Config mc = new Config("mc");
-		String host = mc.getString("proxy.host");
-		String name = mc.getString("binding.name");
-		int port = mc.getInt("proxy.rmi.port");
-		
+		proxy = new ProxyAdapter(clientConfig.getString("proxy.host"), clientConfig.getInt("proxy.tcp.port"), keyProvider, proxyPublicKey);
+			
+		// Init managementService
+		String host = mcConfig.getString("proxy.host");
+		String name = mcConfig.getString("binding.name");
+		int port = mcConfig.getInt("proxy.rmi.port");
 		try {
 			//managementService = (ManagementService) Naming.lookup("rmi://" + host + "/" + name);
 			Registry registry = LocateRegistry.getRegistry(host, port);
-			this.managementService = (ManagementService) registry.lookup(name);
+			this.managementService = (IManagementService) registry.lookup(name);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		
 		// Init notifyCallback
-		this.notifyCallback = new INotifyCallback() {
-			
-			private static final long serialVersionUID = -4994758755943921733L;
-			
-			@Override
-			public void notify(Response r) {
-				try {
-					shell.writeLine(r.toString());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		};
+		try {
+			this.notifyCallback = new NotifyCallbackImpl(shell);
+		} catch (RemoteException e) {
+			throw new RuntimeException(e);
+		}
 		
 		this.shell.run();
 	}
@@ -204,32 +202,26 @@ public class Client implements Runnable {
 		}
 		
 		@Command
-		public Response topThreeDownloads() {
-			
-			Response r = null;
-			
+		public Response topThreeDownloads() {		
+			Response r = null;		
 			try {
 				r = managementService.getTopThree();
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
-			
+			}		
 			return r;
 		}
 		
 		@Command
-		public Response subscribe(String filename, int numberOfDownloads) {
-			
+		public Response subscribe(String filename, int numberOfDownloads) {		
 			Response r = null;
-			
 			try {
-				r = managementService.subscribe(filename, numberOfDownloads, Client.this.notifyCallback);
+				r = managementService.subscribe(filename, numberOfDownloads, notifyCallback);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
-			
+			}	
 			return r;
 		}
 	}

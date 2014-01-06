@@ -1,14 +1,14 @@
-package proxy;
+package proxy.mc;
 
 import java.rmi.RemoteException;
 
+import proxy.DownloadStatistics;
 import client.IClientCli;
-import client.INotifyCallback;
 import message.Response;
 import message.response.SubscriptionResponse;
 import message.response.TopThreeDownloadsResponse;
 
-public class ManagementServiceImpl implements ManagementService {
+public class ManagementServiceImpl implements IManagementService {
 	
 	// Implementations must have an explicit constructor
 	// in order to declare the RemoteException exception
