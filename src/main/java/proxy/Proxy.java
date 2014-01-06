@@ -97,12 +97,12 @@ public class Proxy implements Runnable {
 		fileServerManager = new FileServerManager(datagramReceiver, config.getInt("fileserver.checkPeriod"), config.getInt("fileserver.timeout"), log);	
 		fileServerManager.start();
 		
-		// Start managementServiceServer
-		managementServiceServer = new ManagementServiceServer();
-		managementServiceServer.start();
-		
 		//KeyProvider
 		keyProvider = new KeyProvider(config.getString("keys.dir"));
+		
+		// Start managementServiceServer
+		managementServiceServer = new ManagementServiceServer(uac, keyProvider, config);
+		managementServiceServer.start();
 
 		// Run server in own thread
 		try {

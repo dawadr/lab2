@@ -5,8 +5,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+import proxy.Uac;
 import net.ILogAdapter;
 import util.Config;
+import util.KeyProvider;
 
 public class ManagementServiceServer {
 	
@@ -15,13 +17,13 @@ public class ManagementServiceServer {
 	private ILogAdapter log;
 	private IManagementService ms;
 	
-	public ManagementServiceServer() {	
+	public ManagementServiceServer(Uac uac, KeyProvider keyProvider, Config config) {	
 		Config mc = new Config("mc");
 		this.port = mc.getInt("proxy.rmi.port");
 		this.name = mc.getString("binding.name");
 		
 		try {
-			this.ms = new ManagementServiceImpl();
+			this.ms = new ManagementService(uac, keyProvider, config);
 		} catch (RemoteException e) {
 			log("ManagementServiceImpl could not be initialized: " + e);
 		}
