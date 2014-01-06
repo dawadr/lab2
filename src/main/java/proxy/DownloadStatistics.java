@@ -3,7 +3,8 @@ package proxy;
 import java.util.ArrayList;
 import java.util.List;
 
-import client.IClientCli;
+import client.INotifyCallback;
+import message.response.NotificationResponse;
 import model.DownloadInfo;
 import model.DownloadSubscription;
 
@@ -64,9 +65,11 @@ public class DownloadStatistics {
 					ds.reportDownload();
 					
 					if(ds.getDownloadsUntilNotification() == 0) {
-						ds.getCli().notify();
+						ds.getNotifyCallback().notify(new NotificationResponse(ds.getFilename(), ds.getNotificationInterval()));
 						ds.resetDownloadsUntilNotification();
 					}
+					
+					System.out.println(ds.toString());
 					
 					this.subscriptions.set(i, ds);
 				}
@@ -74,11 +77,11 @@ public class DownloadStatistics {
 		}
 	}
 
-	public void removeNotification(IClientCli cli) {
+	public void removeSubscription(INotifyCallback notifyCallback) {
 		
 		synchronized(this.subscriptions) {
 			for(int i = 0; i < this.subscriptions.size(); i++) {
-				if(this.subscriptions.get(i).getCli().equals(cli)) {
+				if(this.subscriptions.get(i).getNotifyCallback().equals(notifyCallback)) {
 					this.subscriptions.remove(i);
 					i--;
 				}
@@ -86,8 +89,8 @@ public class DownloadStatistics {
 		}
 	}
 	
-	public void addNotification(String filename, int notificationInterval, IClientCli cli) {
-		DownloadSubscription ds = new DownloadSubscription(filename, notificationInterval, cli); 
+	public void addSubscription(String filename, int notificationInterval, INotifyCallback notifyCallback) {
+		DownloadSubscription ds = new DownloadSubscription(filename, notificationInterval, notifyCallback); 
 		synchronized(this.subscriptions) {
 			this.subscriptions.add(ds);
 		}

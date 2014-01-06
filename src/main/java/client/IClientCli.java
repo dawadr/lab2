@@ -142,5 +142,4 @@ public interface IClientCli {
 	 */
 	MessageResponse exit() throws IOException;
 	
-	Response notify(Response r);
 }

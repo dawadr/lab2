@@ -2,7 +2,7 @@ package model;
 
 import java.io.Serializable;
 
-import client.IClientCli;
+import client.INotifyCallback;
 
 public class DownloadSubscription implements Serializable {
 
@@ -11,13 +11,13 @@ public class DownloadSubscription implements Serializable {
 	private final String filename;
 	private final int notificationInterval;
 	private int downloadsUntilNotification;
-	private final IClientCli cli;
+	private final INotifyCallback notifyCallback;
 
-	public DownloadSubscription(String filename, int notificationInterval, IClientCli cli) {
+	public DownloadSubscription(String filename, int notificationInterval, INotifyCallback notifyCallback) {
 		this.filename = filename;
 		this.notificationInterval = notificationInterval;
 		this.downloadsUntilNotification = notificationInterval;
-		this.cli = cli;
+		this.notifyCallback = notifyCallback;
 	}
 
 	public String getFilename() {
@@ -36,25 +36,27 @@ public class DownloadSubscription implements Serializable {
 		return downloadsUntilNotification;
 	}
 
-	public IClientCli getCli() {
-		return cli;
+	public INotifyCallback getNotifyCallback() {
+		return notifyCallback;
 	}
 
 	public void reportDownload() {
 		this.downloadsUntilNotification--;
 	}
-
-	//TODO
-	/*@Override
-	public String toString() {
-		return String.format("%1$-12s %2$5d", filename, downloads);
-	}*/
 	
+	@Override
+	public String toString() {
+		return "DownloadSubscription [filename=" + filename
+				+ ", notificationInterval=" + notificationInterval
+				+ ", downloadsUntilNotification=" + downloadsUntilNotification
+				+ ", notifyCallback=" + notifyCallback + "]";
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof DownloadSubscription)
             return filename.equals(((DownloadSubscription) o).getFilename()) 
-            		&& cli.equals(((DownloadSubscription) o).getCli()) ; 
+            		&& notifyCallback.equals(((DownloadSubscription) o).getNotifyCallback()) ; 
         else
             return false;	
 	}

@@ -10,6 +10,7 @@ import java.rmi.registry.Registry;
 import java.security.PublicKey;
 
 import net.IConnection;
+import net.ILogAdapter;
 import net.TcpConnection;
 import proxy.IProxy;
 import proxy.ManagementService;
@@ -41,6 +42,7 @@ public class Client implements Runnable {
 	private FileManager fileManager;
 	private KeyProvider keyProvider;
 	private ManagementService managementService;
+	private INotifyCallback notifyCallback;
 
 	public static void main(String... args) {
 		String config = "client";
@@ -83,6 +85,21 @@ public class Client implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		// Init notifyCallback
+		this.notifyCallback = new INotifyCallback() {
+			
+			private static final long serialVersionUID = -4994758755943921733L;
+			
+			@Override
+			public void notify(Response r) {
+				try {
+					shell.writeLine(r.toString());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
 		
 		this.shell.run();
 	}
@@ -207,17 +224,12 @@ public class Client implements Runnable {
 			Response r = null;
 			
 			try {
-				r = managementService.subscribe(filename, numberOfDownloads, this);
+				r = managementService.subscribe(filename, numberOfDownloads, Client.this.notifyCallback);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-			return r;
-		}
-		
-		@Override
-		public Response notify(Response r) {
 			return r;
 		}
 	}

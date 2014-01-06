@@ -3,7 +3,7 @@ package proxy;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import client.IClientCli;
+import client.INotifyCallback;
 import message.Response;
 
 public interface ManagementService extends Remote {
@@ -14,7 +14,7 @@ public interface ManagementService extends Remote {
 	
 	public Response getTopThree() throws RemoteException;
 	
-	public Response subscribe(String filename, int downloads, IClientCli cli) throws RemoteException;
+	public Response subscribe(String filename, int downloads, INotifyCallback notifyCallback) throws RemoteException;
 	
 	public String getProxyPublicKey() throws RemoteException;
 	

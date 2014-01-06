@@ -3,7 +3,9 @@ package proxy;
 import java.rmi.RemoteException;
 
 import client.IClientCli;
+import client.INotifyCallback;
 import message.Response;
+import message.response.SubscriptionResponse;
 import message.response.TopThreeDownloadsResponse;
 
 public class ManagementServiceImpl implements ManagementService {
@@ -33,10 +35,16 @@ public class ManagementServiceImpl implements ManagementService {
 	}
 
 	@Override
-	public Response subscribe(String filename, int downloads, IClientCli cli)
+	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		
+		//TODO check login
+		
+		if (notifyCallback != null) {
+			DownloadStatistics.getInstance().addSubscription(filename, notificationInterval, notifyCallback);
+			return new SubscriptionResponse(filename, true);
+		} else
+			return new SubscriptionResponse(filename, false);
 	}
 
 	@Override
