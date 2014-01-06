@@ -5,28 +5,28 @@ import java.io.Serializable;
 /**
  * Contains information about a file.
  */
-public class File implements Serializable {
+public class DownloadInfo implements Serializable {
 
 	//must be serializable for transmitting
 	private static final long serialVersionUID = 1L;
-	private String name;
+	private String filename;
 	private int downloads;
 
-	public File(String name) {
-		this.name = name;
+	public DownloadInfo(String filename) {
+		this.filename = filename;
 	}
 
-	public File(String name, int downloads) {
-		this.name = name;
+	public DownloadInfo(String filename, int downloads) {
+		this.filename = filename;
 		this.downloads = downloads;
 	}
 
-	public String getName() {
-		return name;
+	public String getFilename() {
+		return filename;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setFilename(String filename) {
+		this.filename = filename;
 	}
 
 	public int getDownloads() {
@@ -43,13 +43,13 @@ public class File implements Serializable {
 
 	@Override
 	public String toString() {
-		return String.format("%1$-12s %2$5d", name, downloads);
+		return String.format("%1$-12s %2$5d", filename, downloads);
 	}
 	
 	@Override
 	public boolean equals(Object o) {
-		if (o instanceof File)
-            return name.equals(((File) o).getName()); 
+		if (o instanceof DownloadInfo)
+            return filename.equals(((DownloadInfo) o).getFilename()); 
         else
             return false;	
 	}

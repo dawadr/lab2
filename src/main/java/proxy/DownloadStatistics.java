@@ -1,101 +1,111 @@
 package proxy;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import client.IClientCli;
-import message.response.NotificationResponse;
-import model.File;
+import model.DownloadInfo;
+import model.DownloadSubscription;
 
 public class DownloadStatistics {
 	
 	private static final DownloadStatistics INSTANCE = new DownloadStatistics();
-	private List<File> statistics;
-	private Map<File, IClientCli> notifications;
+	private List<DownloadInfo> statistics;
+	private List<DownloadSubscription> subscriptions;
 	 
 	private DownloadStatistics() {
-		this.statistics = new ArrayList<File>();
-		this.notifications = new HashMap<File, IClientCli>();
+		this.statistics = new ArrayList<DownloadInfo>();
+		this.subscriptions = new ArrayList<DownloadSubscription>();
 	}
  
 	public static DownloadStatistics getInstance() {
 		return INSTANCE;
 	}
 	
-	public synchronized void reportDownload(String filename) {
-		if(this.statistics.contains(new File(filename))) {
-			
-			int index = this.statistics.indexOf(new File(filename));
-			
-			File f = this.statistics.get(index);
-			f.reportDownload();
-			int downloads = f.getDownloads();
-			this.statistics.set(index, f);
-			
-			// Sortierung nach Downloadhaeufigkeit
-			if (index > 0) {
-				while(this.statistics.get(index - 1).getDownloads() < downloads) {
-					File temp = this.statistics.get(index - 1);
-					this.statistics.set(index - 1, f);
-					this.statistics.set(index, temp);
-					index--;
-					if(index < 1)  break;
+	public void reportDownload(String filename) {
+		synchronized(this.statistics) {
+			if(this.statistics.contains(new DownloadInfo(filename))) {
+				
+				int index = this.statistics.indexOf(new DownloadInfo(filename));
+				
+				DownloadInfo f = this.statistics.get(index);
+				f.reportDownload();
+				int downloads = f.getDownloads();
+				this.statistics.set(index, f);
+				
+				// Sortierung nach Downloadhaeufigkeit
+				if (index > 0) {
+					while(this.statistics.get(index - 1).getDownloads() < downloads) {
+						DownloadInfo temp = this.statistics.get(index - 1);
+						this.statistics.set(index - 1, f);
+						this.statistics.set(index, temp);
+						index--;
+						if(index < 1)  break;
+					}
 				}
+				
+			} else {
+				this.statistics.add(new DownloadInfo(filename, 1));
 			}
-			
-		} else {
-			this.statistics.add(new File(filename, 1));
 		}
 		
-		//this.checkNotifications(filename);
+		this.checkNotifications(filename);
 	}
 	
 	/*
 	 * Invoked after every download. Invocation reflects 1 download.
 	 */
-	private synchronized void checkNotifications(String filename) {
-		Iterator<Entry<File, IClientCli>> it = this.notifications.entrySet().iterator();
+	private void checkNotifications(String filename) {
 		
-	    while (it.hasNext()) {
-	        Map.Entry<File, IClientCli> pair = (Map.Entry<File, IClientCli>) it.next();
-	        
-	        if(pair.getKey().getName().equals(filename)) {
-	        	pair.getKey().reportDownload();
-	        	
-	        	/*if(pair.getKey().getDownloadsUntilNotification() < 1) {
-	        		pair.getValue().notify(new NotificationResponse(pair.getKey()));
-	        		this.notifications.remove(pair.getKey());
-	        	}*/
-	        }
-	        
-	        it.remove(); // avoids a ConcurrentModificationException
-	    }
+		synchronized(this.subscriptions) {
+			for(int i = 0; i < this.subscriptions.size(); i++) {
+				if(this.subscriptions.get(i).getFilename().equals(filename)) {
+					DownloadSubscription ds = this.subscriptions.get(i);
+					ds.reportDownload();
+					
+					if(ds.getDownloadsUntilNotification() == 0) {
+						ds.getCli().notify();
+						ds.resetDownloadsUntilNotification();
+					}
+					
+					this.subscriptions.set(i, ds);
+				}
+			}
+		}
 	}
 
 	public void removeNotification(IClientCli cli) {
-		//TODO
-	}
-	
-	public void addNotification(String filename, int downloads, IClientCli cli) {
-		File f = new File(filename, downloads);
-		this.notifications.put(f, cli);
-	}
-	
-	public synchronized List<File> getTopThree() {
 		
-		List<File> result = new ArrayList<File>();
+		synchronized(this.subscriptions) {
+			for(int i = 0; i < this.subscriptions.size(); i++) {
+				if(this.subscriptions.get(i).getCli().equals(cli)) {
+					this.subscriptions.remove(i);
+					i--;
+				}
+			}
+		}
+	}
+	
+	public void addNotification(String filename, int notificationInterval, IClientCli cli) {
+		DownloadSubscription ds = new DownloadSubscription(filename, notificationInterval, cli); 
+		synchronized(this.subscriptions) {
+			this.subscriptions.add(ds);
+		}
+	}
+	
+	public List<DownloadInfo> getTopThree() {
+		
+		List<DownloadInfo> result = new ArrayList<DownloadInfo>();
 
 		int three = 3;
 		
-		if(this.statistics.size() < three) 
-			three = this.statistics.size();
-		
-		for(int i = 0; i < three;i++) {
-			result.add(this.statistics.get(i));
+		synchronized(this.statistics) {
+			if(this.statistics.size() < three) 
+				three = this.statistics.size();
+			
+			for(int i = 0; i < three;i++) {
+				result.add(this.statistics.get(i));
+			}
 		}
 		
 		return result;

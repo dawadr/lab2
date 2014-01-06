@@ -4,7 +4,7 @@ import message.Response;
 
 import java.util.List;
 
-import model.File;
+import model.DownloadInfo;
 
 /**
  * Lists all files available on all file servers.
@@ -23,9 +23,9 @@ import model.File;
 public class TopThreeDownloadsResponse implements Response {
 	private static final long serialVersionUID = -7319020129445822795L;
 
-	private final List<File> downloads;
+	private final List<DownloadInfo> downloads;
 
-	public TopThreeDownloadsResponse(List<File> downloads) {
+	public TopThreeDownloadsResponse(List<DownloadInfo> downloads) {
 		this.downloads = downloads;
 	}
 

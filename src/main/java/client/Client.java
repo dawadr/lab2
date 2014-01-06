@@ -1,6 +1,7 @@
 package client;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
