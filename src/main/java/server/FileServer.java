@@ -17,9 +17,11 @@ import net.IServerConnectionHandlerFactory;
 import net.TcpServer;
 import net.TcpServerConnectionFactory;
 import net.channel.IObjectChannelFactory;
+import net.channel.IntegrityChannelFactory;
 import message.response.MessageResponse;
 import util.Config;
 import util.FileManager;
+import util.KeyProvider;
 
 public class FileServer implements Runnable {
 
@@ -30,6 +32,7 @@ public class FileServer implements Runnable {
 	private IServer server;
 	private AliveSender aliveSender;
 	private FileManager fileManager;
+	private KeyProvider keyProvider;
 
 
 	public static void main(String... args) {
@@ -53,6 +56,9 @@ public class FileServer implements Runnable {
 		// Init fileManager
 		fileManager = new FileManager(config.getString("fileserver.dir"));
 
+		// KeyProvider
+		keyProvider = new KeyProvider(config.getString("keys.dir"));
+				
 		// Init log
 		ILogAdapter log = new ILogAdapter() {
 			@Override
@@ -68,7 +74,7 @@ public class FileServer implements Runnable {
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new FileServerHandlerFactory(fileManager);
-			IObjectChannelFactory channelFactory = new ChannelFactory();
+			IObjectChannelFactory channelFactory = new IntegrityChannelFactory(keyProvider.getSharedSecretKey(config.getString("hmac.key")));
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);

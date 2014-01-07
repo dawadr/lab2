@@ -1,7 +1,9 @@
 package proxy;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -20,6 +22,7 @@ import net.IDatagramPacketListener;
 import net.IDatagramReceiver;
 import net.ILogAdapter;
 import net.TcpConnection;
+import net.channel.IntegrityChannelFactory;
 
 /**
  * Manages fileservers, monitors their status and provides methods to access and modify them.
@@ -37,12 +40,14 @@ public class FileServerManager {
 	private int checkPeriod;
 	private int timeout;
 	private ILogAdapter log;
+	private Key key;
 	
 	private int nr;
 	private int nw;
 	private boolean quorumsSet;
 
-	public FileServerManager(IDatagramReceiver datagramReceiver, int checkPeriod, int timeout, ILogAdapter log) {
+	public FileServerManager(IDatagramReceiver datagramReceiver, Key key, int checkPeriod, int timeout, ILogAdapter log) {
+		this.key = key;
 		this.log = log;
 		this.checkPeriod = checkPeriod;
 		this.timeout = timeout;
@@ -157,7 +162,8 @@ public class FileServerManager {
 	private FileServerAdapter getAdapter(FileServer server) {
 		synchronized (adapters) {
 			if (adapters.containsKey(server)) return adapters.get(server);
-			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new FileserverChannelFactory());
+			// TODO AUFPASSEN  new FileserverChannelFactory() AUF integritychannelfactory!!!! 
+			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new IntegrityChannelFactory(this.key));
 			FileServerAdapter a = new FileServerAdapter(c, server, log);
 			adapters.put(server, a);
 			return a;	

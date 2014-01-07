@@ -92,20 +92,21 @@ public class Proxy implements Runnable {
 			e1.printStackTrace();
 			return;
 		}
-
-		// Start fileServerManager
-		fileServerManager = new FileServerManager(datagramReceiver, config.getInt("fileserver.checkPeriod"), config.getInt("fileserver.timeout"), log);	
-		fileServerManager.start();
-		
 		//KeyProvider
 		keyProvider = new KeyProvider(config.getString("keys.dir"));
+		try {
+		// Start fileServerManager
+		fileServerManager = new FileServerManager(datagramReceiver, keyProvider.getSharedSecretKey(config.getString("hmac.key")), config.getInt("fileserver.checkPeriod"), config.getInt("fileserver.timeout"), log);	
+		fileServerManager.start();
+		
+
 		
 		// Start managementServiceServer
 		managementServiceServer = new ManagementServiceServer(uac, keyProvider, config);
 		managementServiceServer.start();
-
+		
 		// Run server in own thread
-		try {
+		
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
 			// TODO: Passwort nicht hardcodieren!!!!!
 			IObjectChannelFactory channelFactory = new SecureClientChannelFactory(keyProvider, keyProvider.getPrivateKey(config.getString("key"), "12345"));

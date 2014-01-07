@@ -1,16 +1,19 @@
 package util;
 
-import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
 
+import javax.crypto.spec.SecretKeySpec;
+
 import org.bouncycastle.openssl.PasswordFinder;
 import org.bouncycastle.openssl.PEMReader; 
+import org.bouncycastle.util.encoders.Hex;
 
 public class KeyProvider {
 
@@ -64,6 +67,18 @@ public class KeyProvider {
 		PrivateKey privateKey = keyPair.getPrivate();
 		in.close();
 		return privateKey;
+	}
+	
+	public Key getSharedSecretKey(String location) throws IOException {
+		byte[] keyBytes = new byte[1024];
+		String pathToSecretKey = location;
+		FileInputStream fis = new FileInputStream(pathToSecretKey);
+		fis.read(keyBytes);
+		fis.close();
+		byte[] input = Hex.decode(keyBytes);
+		
+		Key key = new SecretKeySpec(input, "HmacSHA256");
+		return key;
 	}
 	
 }
