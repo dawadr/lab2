@@ -26,6 +26,6 @@ public class IntegrityObjectMessage implements Serializable {
 	}
 	
 	public String toString() {
-		return new String(this.hash) + " " + object.toString();
+		return hash + " " + object.toString();
 	}
 }

@@ -39,6 +39,7 @@ public class IntegrityObjectChannel implements IObjectChannel {
 
 	@Override
 	public void writeObject(Object o) throws IOException {
+		// wenn nachrichten ohne hash ankamen, soll auch ohne hash versendet werden (zb bei client)
 		if (!hmacUsed) {
 			out.writeObject(o);
 			return;
@@ -75,7 +76,7 @@ public class IntegrityObjectChannel implements IObjectChannel {
 		if (o instanceof IntegrityObjectMessage) {
 			hmacUsed = true;
 			IntegrityObjectMessage msg = (IntegrityObjectMessage)o;
-			log("Receiving IntegrityDataMessage: " + msg.toString());
+			log("Receiving IntegrityObjectMessage: " + msg.toString());
 			try {
 				if(integrityCheck(msg)) {
 					returnObject = msg.getObject();
