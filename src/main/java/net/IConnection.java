@@ -27,6 +27,8 @@ public interface IConnection {
 	 */
 	public void close() throws IOException;
 	
+	public void setLogAdapter(ILogAdapter log);
+	
 	public InetAddress getHost();
 	
 	public int getPort();

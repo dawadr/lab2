@@ -54,7 +54,6 @@ public class TcpServerConnection implements IServerConnection, ILogAdapter {
 			return;
 		}
 
-
 		try {
 			Object inputObject;
 			Object outputObject;  

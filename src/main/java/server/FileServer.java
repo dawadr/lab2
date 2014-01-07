@@ -18,7 +18,7 @@ import net.IServerConnectionHandlerFactory;
 import net.TcpServer;
 import net.TcpServerConnectionFactory;
 import net.channel.IObjectChannelFactory;
-import net.channel.IntegrityObjectChannelFactory;
+import net.channel.VerifiedObjectChannelFactory;
 import message.response.MessageResponse;
 import util.Config;
 import util.FileManager;
@@ -80,7 +80,7 @@ public class FileServer implements Runnable {
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new FileServerHandlerFactory(fileManager);
-			IObjectChannelFactory channelFactory = new IntegrityObjectChannelFactory(sharedSecretKey);
+			IObjectChannelFactory channelFactory = new VerifiedObjectChannelFactory(sharedSecretKey, false);
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);

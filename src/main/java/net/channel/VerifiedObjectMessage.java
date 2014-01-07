@@ -7,25 +7,27 @@ import java.io.Serializable;
  * @author juliadaurer
  *
  */
-public class IntegrityObjectMessage implements Serializable {
+public class VerifiedObjectMessage implements Serializable {
 	private static final long serialVersionUID = -2583081741708481647L;
 	private String hash;
 	private Object object;
 
-	public IntegrityObjectMessage(Object object, String hash) {
+
+	public VerifiedObjectMessage(Object object, String hash) {
 		this.object = object;
 		this.hash = hash; 
 	}
-	
+
 	public String getHash() {
-		return hash;
+			return hash;
 	}
-	
+
 	public Object getObject() {
 		return object;
 	}
-	
+
 	public String toString() {
-		return hash + " " + object.toString();
+		return getHash() + " " + object.toString();
 	}
+	
 }

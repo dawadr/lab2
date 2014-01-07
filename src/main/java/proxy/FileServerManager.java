@@ -22,7 +22,7 @@ import net.IDatagramPacketListener;
 import net.IDatagramReceiver;
 import net.ILogAdapter;
 import net.TcpConnection;
-import net.channel.IntegrityObjectChannelFactory;
+import net.channel.VerifiedObjectChannelFactory;
 
 /**
  * Manages fileservers, monitors their status and provides methods to access and modify them.
@@ -165,7 +165,9 @@ public class FileServerManager {
 		synchronized (adapters) {
 			if (adapters.containsKey(server)) return adapters.get(server);
 			// TODO AUFPASSEN  new FileserverChannelFactory() AUF integritychannelfactory!!!! 
-			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new IntegrityObjectChannelFactory(this.key));
+			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new VerifiedObjectChannelFactory(this.key, true));
+			c.setLogAdapter(log);
+			
 			FileServerAdapter a = new FileServerAdapter(c, server, log);
 			adapters.put(server, a);
 			return a;	

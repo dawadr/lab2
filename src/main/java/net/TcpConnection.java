@@ -32,6 +32,8 @@ public class TcpConnection implements IConnection {
 	private IObjectChannelFactory channelFactory;
 	private IObjectChannel channel;
 
+	private ILogAdapter log;
+
 	/**
 	 * 
 	 * @param host
@@ -55,6 +57,7 @@ public class TcpConnection implements IConnection {
 		out = sock.getOutputStream();
 		in = sock.getInputStream();
 		channel = channelFactory.create(out, in);
+		channel.setLogAdapter(log);
 	}
 
 	public synchronized Response send(Request req) throws IOException {
@@ -107,6 +110,12 @@ public class TcpConnection implements IConnection {
 	@Override
 	public synchronized boolean isClosed() {
 		return sock == null || sock.isClosed();
+	}
+
+
+	@Override
+	public void setLogAdapter(ILogAdapter log) {
+		this.log = log;
 	}
 
 }

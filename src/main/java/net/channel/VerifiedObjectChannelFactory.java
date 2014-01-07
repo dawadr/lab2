@@ -5,25 +5,29 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Key;
 
+import net.ILogAdapter;
 
-public class IntegrityObjectChannelFactory implements IObjectChannelFactory {
+
+public class VerifiedObjectChannelFactory implements IObjectChannelFactory {
 
 	private Key key;
+	private boolean repeat;
 
 	/**
 	 * Initialisiert die Factory
 	 * @param key Shared Key von Proxy/Fileserver
 	 */
-	public IntegrityObjectChannelFactory(Key key) {
+	public VerifiedObjectChannelFactory(Key key, boolean repeat) {
 		this.key = key;
+		this.repeat = repeat;
 	}
 
 
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
 		// System.out.println("Secure TCP Channel erstellen");
-		// Objekte serialisieren -> Base64 codieren -> Bytes (Hash + Data) schicken
-		return new IntegrityObjectChannel(out, in, key);     
+		IObjectChannel c = new VerifiedObjectChannel(out, in, key, repeat);     
+		return c;
 	}
 
 
