@@ -45,6 +45,7 @@ public class Client implements Runnable {
 	private KeyProvider keyProvider;
 	private IManagementService managementService;
 	private INotifyCallback notifyCallback;
+	private String username;
 
 	public static void main(String... args) {
 		String client = "client";
@@ -114,6 +115,7 @@ public class Client implements Runnable {
 		public Response login(String username, String password) throws IOException {
 			LoginRequest req = new LoginRequest(username, password);
 			Response r = proxy.login(req);	
+			Client.this.username = username;
 			return r;
 		}
 
@@ -217,7 +219,7 @@ public class Client implements Runnable {
 		public Response subscribe(String filename, int numberOfDownloads) {		
 			Response r = null;
 			try {
-				r = managementService.subscribe(filename, numberOfDownloads, notifyCallback);
+				r = managementService.subscribe(filename, numberOfDownloads, notifyCallback, Client.this.username);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

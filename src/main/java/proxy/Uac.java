@@ -91,6 +91,18 @@ public class Uac {
 	}
 
 	/**
+	 * Determines whether a user is logged in.
+	 * @return a boolean value, true if logged in
+	 */
+	public synchronized boolean isLoggedIn (String username) {
+		if (users.containsKey(username)) {
+			return users.get(username).getUser().isOnline();
+		} 
+		
+		return false;
+	}
+
+	/**
 	 * Stores the 'sessions' objects the user is connected to and controls the user's online status.
 	 * @author Alex
 	 *

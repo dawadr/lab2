@@ -46,12 +46,12 @@ public class ManagementService implements IManagementService {
 	}
 
 	@Override
-	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback)
+	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback, String username)
 			throws RemoteException {
 		
-		//TODO check login
+		if(username == null) return new SubscriptionResponse(filename, false);
 		
-		if (notifyCallback != null) {
+		if (notifyCallback != null && uac.isLoggedIn(username)) {
 			DownloadStatistics.getInstance().addSubscription(filename, notificationInterval, notifyCallback);
 			return new SubscriptionResponse(filename, true);
 		} else

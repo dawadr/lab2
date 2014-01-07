@@ -13,7 +13,7 @@ public interface IManagementService extends Remote {
 	
 	public Response getTopThree() throws RemoteException;
 	
-	public Response subscribe(String filename, int downloads, INotifyCallback notifyCallback) throws RemoteException;
+	public Response subscribe(String filename, int downloads, INotifyCallback notifyCallback, String username) throws RemoteException;
 	
 	public String getProxyPublicKey() throws RemoteException;
 	
