@@ -41,7 +41,7 @@ public class SecureProxyChannelFactory implements IObjectChannelFactory {
 	
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
-		// Objekte serialisieren -> verschluesseln -> Base64 codieren -> Bytes schicken
+		// Objekte serialisieren -> verschluesseln -> Base64 codieren -> Daten schicken
 		return new SerializedChannel(new SecureProxyChannel(new Base64Channel(new DataChannel(out, in)), username, privateKey, publicKey));
 	}
 

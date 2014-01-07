@@ -35,10 +35,10 @@ public abstract class ChannelDecorator implements IChannel {
 	@Override
 	public void setLogAdapter(ILogAdapter log) {
 		this.log = log;
+		decoratedChannel.setLogAdapter(log);
 	}
 
 	protected void log(String message) {
 		if (log != null) log.log(message);
-		System.out.println(message);
 	}
 }

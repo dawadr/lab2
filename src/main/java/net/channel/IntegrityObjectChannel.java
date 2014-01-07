@@ -105,9 +105,7 @@ public class IntegrityObjectChannel implements IObjectChannel {
 	}
 
 	protected void log(String message) {
-		// TODO: aufräumen
 		if (log != null) log.log(message);
-		System.out.println(message);
 	}
 
 	private boolean integrityCheck(IntegrityObjectMessage msg) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, IOException {
