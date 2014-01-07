@@ -1,6 +1,8 @@
 package proxy.rmi;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
 
 import proxy.DownloadStatistics;
 import proxy.FileServerManager;
@@ -11,6 +13,8 @@ import client.IClientCli;
 import message.Response;
 import message.response.QuorumResponse;
 import message.response.QuorumResponse.QuorumType;
+import message.response.KeyResponse;
+import message.response.MessageResponse;
 import message.response.SubscriptionResponse;
 import message.response.TopThreeDownloadsResponse;
 
@@ -18,7 +22,8 @@ public class ManagementService implements IManagementService {
 	
 	private Uac uac;
 	private KeyProvider keyProvider;
-	private Config config;
+	private Config proxyConfig;
+	private Config clientConfig;
 	private FileServerManager fileServerManager;
 	
 	// Implementations must have an explicit constructor
@@ -29,7 +34,8 @@ public class ManagementService implements IManagementService {
 		
 		this.uac = uac;
 		this.keyProvider = keyProvider;
-		this.config = config;
+		this.proxyConfig = config;
+		this.clientConfig = new Config("client");
 		this.fileServerManager = fileServerManager;
 	}
 
@@ -68,14 +74,33 @@ public class ManagementService implements IManagementService {
 
 	@Override
 	public Response getProxyPublicKey() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		
+		PublicKey publicKey = null; 
+		
+		try {
+			publicKey = keyProvider.getPublicKey(clientConfig.getString("proxy.key"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return new KeyResponse(publicKey);
 	}
 
 	@Override
-	public Response setUserPublicKey(String username) throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+	public Response setUserPublicKey(PublicKey key, String username) throws RemoteException {
+		if(key != null) {
+			try {
+				keyProvider.writeKeyTo(key, "keys/upload." + username.toLowerCase() + ".pub.pem");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return new MessageResponse("Successfully transmitted public key of user: " + username);
+		}
+		
+		return new MessageResponse("Transmitting public key of user " + username + " was not successful.");
 	}
 
 }

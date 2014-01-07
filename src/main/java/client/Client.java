@@ -21,6 +21,7 @@ import message.request.LoginRequest;
 import message.request.UploadRequest;
 import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
+import message.response.KeyResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
 import cli.Command;
@@ -81,7 +82,6 @@ public class Client implements Runnable {
 		String name = mcConfig.getString("binding.name");
 		int port = mcConfig.getInt("proxy.rmi.port");
 		try {
-			//managementService = (ManagementService) Naming.lookup("rmi://" + host + "/" + name);
 			Registry registry = LocateRegistry.getRegistry(host, port);
 			this.managementService = (IManagementService) registry.lookup(name);
 		} catch (RemoteException e) {
@@ -246,6 +246,62 @@ public class Client implements Runnable {
 				e.printStackTrace();
 			}	
 			return r;
+		}
+		
+		@Command
+		public Response getProxyPublicKey() {		
+			Response r = null;
+			try {
+				r = managementService.getProxyPublicKey();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}	
+			
+			if(r instanceof KeyResponse) {
+				
+				PublicKey publicKey = (PublicKey) ((KeyResponse) r).getKey();
+				
+				if(publicKey != null) {
+					try {
+						keyProvider.writeKeyTo(publicKey, "keys/download.proxy.pub.pem");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					return new MessageResponse("Successfully received public key of Proxy.");
+				}
+			}
+			
+			return new MessageResponse("Receiving public key failed.");
+		}
+		
+		@Command
+		public Response setUserPublicKey(String username) {		
+			
+			PublicKey publicUserKey = null; 
+			
+			try {
+				publicUserKey = keyProvider.getPublicUserKey(username);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			if(publicUserKey != null) {
+				Response r = null;
+				try {
+					r = managementService.setUserPublicKey(publicUserKey, username);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				return r;
+			}
+			
+			return new MessageResponse("Transmitting public key of user " + username + " was not successful.");
 		}
 	}
 

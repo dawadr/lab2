@@ -1,12 +1,15 @@
 package util;
 
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
 
+import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.openssl.PasswordFinder;
 import org.bouncycastle.openssl.PEMReader; 
 
@@ -21,7 +24,7 @@ public class KeyProvider {
 
 
 	public PublicKey getPublicUserKey(String username) throws IOException {
-		String pathToPublicKey = userKeysPath + "/" + username + ".pub.pem";
+		String pathToPublicKey = userKeysPath + "/" + username.toLowerCase() + ".pub.pem";
 		PEMReader in = new PEMReader(new FileReader(pathToPublicKey)); 
 		PublicKey publicKey = (PublicKey) in.readObject();
 		in.close();
@@ -48,6 +51,12 @@ public class KeyProvider {
 		PublicKey publicKey = (PublicKey) in.readObject();
 		in.close();
 		return publicKey;
+	}
+	
+	public void writeKeyTo(Key key, String location) throws IOException {
+		PEMWriter out = new PEMWriter(new FileWriter(location));
+		out.writeObject(key);
+		out.close();
 	}
 	
 	public PrivateKey getPrivateKey(String location, final String password) throws IOException {
