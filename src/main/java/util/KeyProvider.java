@@ -47,7 +47,7 @@ public class KeyProvider {
 		return privateKey;
 	}
 	
-	public PublicKey getPublicKey(String location) throws IOException {
+	public static PublicKey getPublicKey(String location) throws IOException {
 		String pathToPublicKey = location;
 		PEMReader in = new PEMReader(new FileReader(pathToPublicKey)); 
 		PublicKey publicKey = (PublicKey) in.readObject();
@@ -55,7 +55,7 @@ public class KeyProvider {
 		return publicKey;
 	}
 	
-	public PrivateKey getPrivateKey(String location, final String password) throws IOException {
+	public static PrivateKey getPrivateKey(String location, final String password) throws IOException {
 		String pathToPrivateKey = location;
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
@@ -69,7 +69,7 @@ public class KeyProvider {
 		return privateKey;
 	}
 	
-	public Key getSharedSecretKey(String location) throws IOException {
+	public static Key getSharedSecretKey(String location) throws IOException {
 		byte[] keyBytes = new byte[1024];
 		String pathToSecretKey = location;
 		FileInputStream fis = new FileInputStream(pathToSecretKey);

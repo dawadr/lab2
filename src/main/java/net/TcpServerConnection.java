@@ -8,8 +8,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import net.channel.Base64Channel;
-import net.channel.ByteChannel;
 import net.channel.IChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;

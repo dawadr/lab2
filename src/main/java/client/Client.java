@@ -12,6 +12,7 @@ import java.security.PublicKey;
 import net.IConnection;
 import net.ILogAdapter;
 import net.TcpConnection;
+import net.channel.ObjectChannelFactory;
 import proxy.IProxy;
 import proxy.mc.IManagementService;
 import proxy.mc.INotifyCallback;
@@ -72,7 +73,7 @@ public class Client implements Runnable {
 		// Init ProxyAdapter
 		PublicKey proxyPublicKey;
 		try {
-			proxyPublicKey = keyProvider.getPublicKey(clientConfig.getString("proxy.key"));
+			proxyPublicKey = KeyProvider.getPublicKey(clientConfig.getString("proxy.key"));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -155,7 +156,7 @@ public class Client implements Runnable {
 			// prepare download from fileserver
 			InetAddress host = ticket.getAddress();
 			int port = ticket.getPort();
-			IConnection fsCon = new TcpConnection(host.getHostAddress(), port, new FileserverChannelFactory());
+			IConnection fsCon = new TcpConnection(host.getHostAddress(), port, new ObjectChannelFactory());
 			IFileServer fsAdapter = new FileServerAdapter(fsCon);
 
 			// download file

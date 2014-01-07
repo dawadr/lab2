@@ -22,7 +22,7 @@ import net.IDatagramPacketListener;
 import net.IDatagramReceiver;
 import net.ILogAdapter;
 import net.TcpConnection;
-import net.channel.IntegrityChannelFactory;
+import net.channel.IntegrityObjectChannelFactory;
 
 /**
  * Manages fileservers, monitors their status and provides methods to access and modify them.
@@ -111,7 +111,9 @@ public class FileServerManager {
 			// Gifford's scheme
 			int n = servers.size();
 			nw = (n / 2) + 1;	
-			nr = (n / 2);	
+			nr = (n / 2);
+			if (nw < 1) nw = 1;
+			if (nr < 1) nr = 1;
 			quorumsSet = true;
 			log("Quorums set: Nr = " + nr + ", nw = " + nw);
 		}
@@ -163,7 +165,7 @@ public class FileServerManager {
 		synchronized (adapters) {
 			if (adapters.containsKey(server)) return adapters.get(server);
 			// TODO AUFPASSEN  new FileserverChannelFactory() AUF integritychannelfactory!!!! 
-			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new IntegrityChannelFactory(this.key));
+			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new IntegrityObjectChannelFactory(this.key));
 			FileServerAdapter a = new FileServerAdapter(c, server, log);
 			adapters.put(server, a);
 			return a;	

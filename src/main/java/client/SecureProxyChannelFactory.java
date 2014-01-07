@@ -9,7 +9,7 @@ import java.security.PublicKey;
 
 import util.KeyProvider;
 import net.channel.Base64Channel;
-import net.channel.ByteChannel;
+import net.channel.DataChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
@@ -41,7 +41,7 @@ public class SecureProxyChannelFactory implements IObjectChannelFactory {
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
 		// Objekte serialisieren -> verschluesseln -> Base64 codieren -> Bytes schicken
-		return new ObjectChannel(new SecureProxyChannel(new Base64Channel(new ByteChannel(out, in)), username, privateKey, publicKey));
+		return new ObjectChannel(new SecureProxyChannel(new Base64Channel(new DataChannel(out, in)), username, privateKey, publicKey));
 	}
 
 }

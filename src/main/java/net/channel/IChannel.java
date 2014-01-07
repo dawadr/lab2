@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import net.ILogAdapter;
 
 /**
- * Ein Channel, ueber den Bytes geschickt und gelesen werden
+ * Ein Channel, ueber den Daten geschickt und gelesen werden
  * @author Alex
  *
  */

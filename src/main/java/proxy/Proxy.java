@@ -5,6 +5,7 @@ import cli.Shell;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.security.Key;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +84,10 @@ public class Proxy implements Runnable {
 			return;
 		}
 
+		// Init KeyProvider
+		String keysDir = config.getString("keys.dir");
+		keyProvider = new KeyProvider(keysDir);
+
 		// Run datagramReceiver in own thread
 		try {
 			datagramReceiver = new DatagramReceiver(config.getInt("udp.port"));
@@ -92,24 +97,32 @@ public class Proxy implements Runnable {
 			e1.printStackTrace();
 			return;
 		}
-		//KeyProvider
-		keyProvider = new KeyProvider(config.getString("keys.dir"));
-		try {
-		// Start fileServerManager
-		fileServerManager = new FileServerManager(datagramReceiver, keyProvider.getSharedSecretKey(config.getString("hmac.key")), config.getInt("fileserver.checkPeriod"), config.getInt("fileserver.timeout"), log);	
-		fileServerManager.start();
-		
 
-		
+		// Shared secret key einlesen
+		String hmacLocation = config.getString("hmac.key");
+		Key sharedSecretKey;
+		try {
+			sharedSecretKey = KeyProvider.getSharedSecretKey(hmacLocation);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			return;
+		}
+	
+		// Start fileServerManager
+		int checkPeriod = config.getInt("fileserver.checkPeriod");
+		int timeout = config.getInt("fileserver.timeout");
+		fileServerManager = new FileServerManager(datagramReceiver, sharedSecretKey, checkPeriod, timeout, log);	
+		fileServerManager.start();
+
 		// Start managementServiceServer
 		managementServiceServer = new ManagementServiceServer(uac, keyProvider, config);
 		managementServiceServer.start();
-		
+
 		// Run server in own thread
-		
+		try {
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
 			// TODO: Passwort nicht hardcodieren!!!!!
-			IObjectChannelFactory channelFactory = new SecureClientChannelFactory(keyProvider, keyProvider.getPrivateKey(config.getString("key"), "12345"));
+			IObjectChannelFactory channelFactory = new SecureClientChannelFactory(keyProvider, KeyProvider.getPrivateKey(config.getString("key"), "12345"));
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);
