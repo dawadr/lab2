@@ -14,6 +14,7 @@ import javax.crypto.Mac;
 
 import org.bouncycastle.util.encoders.Base64;
 
+import util.Serialization;
 import net.ILogAdapter;
 
 /**
@@ -22,28 +23,34 @@ import net.ILogAdapter;
  *
  */
 
-public class IntegrityDataChannel implements IChannel {
+public class IntegrityObjectChannel implements IObjectChannel {
 	private Key key;
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private ILogAdapter log;
+	
+	private boolean hmacUsed = true;
 
-	public IntegrityDataChannel(OutputStream out, InputStream in, Key key) throws IOException {
+	public IntegrityObjectChannel(OutputStream out, InputStream in, Key key) throws IOException {
 		this.out = new ObjectOutputStream(out);
 		this.in  = new ObjectInputStream((in));
 		this.key = key;
 	}
 
 	@Override
-	public void writeBytes(byte[] data) throws IOException {
+	public void writeObject(Object o) throws IOException {
+		if (!hmacUsed) {
+			out.writeObject(o);
+			return;
+		}
 		try {
 			Mac hMac = Mac.getInstance("HmacSHA256");
 			hMac.init(this.key);
-			hMac.update(data);
+			hMac.update(Serialization.serialize(o));
 			byte[] hash = hMac.doFinal();
 			String hash_encoded = new String(Base64.encode(hash));
 			//			System.out.println("Sending DATAHASHMsg");
-			out.writeObject(new IntegrityDataMessage(data, hash_encoded));
+			out.writeObject(new IntegrityObjectMessage(o, hash_encoded));
 			//			System.out.println("Sended DATAHASHMsg");
 
 		} catch (Exception e) {
@@ -52,7 +59,7 @@ public class IntegrityDataChannel implements IChannel {
 	}
 
 	@Override
-	public byte[] readBytes() throws IOException {
+	public Object readObject() throws IOException, ClassNotFoundException {
 		Object o;
 		try {
 			o = in.readObject();
@@ -62,15 +69,16 @@ public class IntegrityDataChannel implements IChannel {
 		if (o == null) return null;
 		//		System.out.println("Receiving DATAHASHMsg");
 
-		byte[] data = null;
+		Object returnObject = null;
 
 		// Es kommt eine Nachricht mit Hash an
-		if (o instanceof IntegrityDataMessage) {
-			log("Receiving IntegrityDataMessage");
-			IntegrityDataMessage msg = (IntegrityDataMessage)o;
+		if (o instanceof IntegrityObjectMessage) {
+			hmacUsed = true;
+			IntegrityObjectMessage msg = (IntegrityObjectMessage)o;
+			log("Receiving IntegrityDataMessage: " + msg.toString());
 			try {
 				if(integrityCheck(msg)) {
-					data = msg.getData();
+					returnObject = msg.getObject();
 				} else {
 					log(msg.toString());
 					//TODO inform proxy about the tampering
@@ -80,14 +88,13 @@ public class IntegrityDataChannel implements IChannel {
 			}
 		}
 		// Es kommt eine Nachricht ohne Hash an (zB zwischen Client und FS) -> einfach so weitergeben
-		else if (o instanceof DataMessage) {
-			log("Receiving DataMessage");
-			DataMessage msg = (DataMessage)o;
-			data = msg.getData();
+		else {
+			hmacUsed = false;
+			log("Receiving object without hash");
+			returnObject = o;
 		}
-		//		else throw new IOException("Receiving data failed");
 
-		return data;
+		return returnObject;
 	}
 
 
@@ -102,13 +109,14 @@ public class IntegrityDataChannel implements IChannel {
 		System.out.println(message);
 	}
 
-	private boolean integrityCheck(IntegrityDataMessage msg) throws NoSuchAlgorithmException, InvalidKeyException {
+	private boolean integrityCheck(IntegrityObjectMessage msg) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, IOException {
 		Mac hMac = Mac.getInstance("HmacSHA256");
 		hMac.init(this.key);
-		hMac.update(msg.getData());
+		hMac.update(Serialization.serialize(msg.getObject()));
 		byte[] hash = hMac.doFinal();
 		String hash_encoded = new String(Base64.encode(hash));	
 		return msg.getHash().equals(hash_encoded);
 	}
+
 
 }

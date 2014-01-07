@@ -14,7 +14,7 @@ public class ObjectChannelFactory implements IObjectChannelFactory {
 
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
-		return new ObjectChannel((new Base64Channel(new DataChannel(out, in))));
+		return new ObjectChannel(out, in);
 	}
 
 }

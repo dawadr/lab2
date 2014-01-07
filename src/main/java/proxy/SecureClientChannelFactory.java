@@ -12,6 +12,7 @@ import net.channel.DataChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
 import net.channel.ObjectChannel;
+import net.channel.SerializedChannel;
 
 /**
  * Erzeugt SecureClientChannel
@@ -35,7 +36,7 @@ public class SecureClientChannelFactory implements IObjectChannelFactory {
 	
 	@Override
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
-		return new ObjectChannel(new SecureClientChannel(new Base64Channel(new DataChannel(out, in)), privateKey, keyProvider));
+		return new SerializedChannel(new SecureClientChannel(new Base64Channel(new DataChannel(out, in)), privateKey, keyProvider));
 	}
 
 }

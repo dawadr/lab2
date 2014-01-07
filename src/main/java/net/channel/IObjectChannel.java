@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import net.ILogAdapter;
+
 /**
- * Erweitert IChannel um Methoden, um Objekte zu senden/empfangen
+ * Channel mit Methoden um Objekte zu senden/empfangen
  * @author Alex
  *
  */
-public interface IObjectChannel extends IChannel {
+public interface IObjectChannel {
 	public void writeObject(Object o) throws IOException;
 	public Object readObject() throws IOException, ClassNotFoundException;
+	public void setLogAdapter(ILogAdapter log);
 }

@@ -23,7 +23,7 @@ public class IntegrityObjectChannelFactory implements IObjectChannelFactory {
 	public IObjectChannel create(OutputStream out, InputStream in) throws IOException {
 		// System.out.println("Secure TCP Channel erstellen");
 		// Objekte serialisieren -> Base64 codieren -> Bytes (Hash + Data) schicken
-		return new ObjectChannel(new Base64Channel(new IntegrityDataChannel(out, in, key)));     
+		return new IntegrityObjectChannel(out, in, key);     
 	}
 
 
