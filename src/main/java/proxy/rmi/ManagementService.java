@@ -1,13 +1,16 @@
-package proxy.mc;
+package proxy.rmi;
 
 import java.rmi.RemoteException;
 
 import proxy.DownloadStatistics;
+import proxy.FileServerManager;
 import proxy.Uac;
 import util.Config;
 import util.KeyProvider;
 import client.IClientCli;
 import message.Response;
+import message.response.QuorumResponse;
+import message.response.QuorumResponse.QuorumType;
 import message.response.SubscriptionResponse;
 import message.response.TopThreeDownloadsResponse;
 
@@ -16,27 +19,32 @@ public class ManagementService implements IManagementService {
 	private Uac uac;
 	private KeyProvider keyProvider;
 	private Config config;
+	private FileServerManager fileServerManager;
 	
 	// Implementations must have an explicit constructor
 	// in order to declare the RemoteException exception
-	public ManagementService(Uac uac, KeyProvider keyProvider, Config config) throws RemoteException {
+	public ManagementService(Uac uac, KeyProvider keyProvider, Config config, 
+			FileServerManager fileServerManager) throws RemoteException {
 		super(); 
 		
 		this.uac = uac;
 		this.keyProvider = keyProvider;
 		this.config = config;
+		this.fileServerManager = fileServerManager;
 	}
 
 	@Override
-	public int getReadQuorum() throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+	public Response getReadQuorum() throws RemoteException {
+		
+		int quorum = this.fileServerManager.getServerProvider().getReadQuorum().size();
+		return new QuorumResponse(QuorumType.READ, quorum);
 	}
 
 	@Override
-	public int getWriteQuorum() throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+	public Response getWriteQuorum() throws RemoteException {
+		
+		int quorum = this.fileServerManager.getServerProvider().getWriteQuorum().size();
+		return new QuorumResponse(QuorumType.WRITE, quorum);
 	}
 
 	@Override
@@ -46,8 +54,8 @@ public class ManagementService implements IManagementService {
 	}
 
 	@Override
-	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback, String username)
-			throws RemoteException {
+	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback, 
+			String username) throws RemoteException {
 		
 		if(username == null) return new SubscriptionResponse(filename, false);
 		
@@ -59,15 +67,15 @@ public class ManagementService implements IManagementService {
 	}
 
 	@Override
-	public String getProxyPublicKey() throws RemoteException {
+	public Response getProxyPublicKey() throws RemoteException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public boolean setUserPublicKey(String username) throws RemoteException {
+	public Response setUserPublicKey(String username) throws RemoteException {
 		// TODO Auto-generated method stub
-		return false;
+		return null;
 	}
 
 }

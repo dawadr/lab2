@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import proxy.mc.ManagementServiceServer;
+import proxy.rmi.ManagementServiceServer;
 import net.DatagramReceiver;
 import net.IDatagramReceiver;
 import net.ILogAdapter;
@@ -101,7 +101,7 @@ public class Proxy implements Runnable {
 		keyProvider = new KeyProvider(config.getString("keys.dir"));
 		
 		// Start managementServiceServer
-		managementServiceServer = new ManagementServiceServer(uac, keyProvider, config);
+		managementServiceServer = new ManagementServiceServer(uac, keyProvider, config, fileServerManager);
 		managementServiceServer.start();
 
 		// Run server in own thread

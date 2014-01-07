@@ -5,7 +5,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 import cli.Shell;
-import proxy.mc.INotifyCallback;
+import proxy.rmi.INotifyCallback;
 import message.Response;
 
 public class NotifyCallbackImpl extends UnicastRemoteObject implements INotifyCallback {

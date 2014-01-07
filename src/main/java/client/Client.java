@@ -1,7 +1,6 @@
 package client;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -10,11 +9,10 @@ import java.rmi.registry.Registry;
 import java.security.PublicKey;
 
 import net.IConnection;
-import net.ILogAdapter;
 import net.TcpConnection;
 import proxy.IProxy;
-import proxy.mc.IManagementService;
-import proxy.mc.INotifyCallback;
+import proxy.rmi.IManagementService;
+import proxy.rmi.INotifyCallback;
 import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadFileRequest;
@@ -23,7 +21,6 @@ import message.request.LoginRequest;
 import message.request.UploadRequest;
 import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
-import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
 import cli.Command;
@@ -201,6 +198,30 @@ public class Client implements Runnable {
 			shell.close();
 			System.in.close();
 			return new MessageResponse("Shutting down. Bye-bye");
+		}
+		
+		@Command
+		public Response readQuorum() {		
+			Response r = null;		
+			try {
+				r = managementService.getReadQuorum();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		
+			return r;
+		}
+		
+		@Command
+		public Response writeQuorum() {		
+			Response r = null;		
+			try {
+				r = managementService.getWriteQuorum();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		
+			return r;
 		}
 		
 		@Command

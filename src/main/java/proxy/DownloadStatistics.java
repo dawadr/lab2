@@ -4,7 +4,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import proxy.mc.INotifyCallback;
+import proxy.rmi.INotifyCallback;
 import message.response.NotificationResponse;
 import model.DownloadInfo;
 import model.DownloadSubscription;
