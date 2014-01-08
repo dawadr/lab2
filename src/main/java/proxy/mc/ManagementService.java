@@ -1,42 +1,54 @@
 package proxy.mc;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
 
 import proxy.DownloadStatistics;
+import proxy.FileServerManager;
 import proxy.Uac;
 import util.Config;
 import util.KeyProvider;
 import client.IClientCli;
 import message.Response;
+import message.response.MessageResponse;
+import message.response.PublicKeyResponse;
+import message.response.QuorumResponse.QuorumType;
 import message.response.SubscriptionResponse;
+import message.response.QuorumResponse;
 import message.response.TopThreeDownloadsResponse;
 
 public class ManagementService implements IManagementService {
 	
 	private Uac uac;
 	private KeyProvider keyProvider;
-	private Config config;
+	private Config clientConfig;
+	private FileServerManager fileServerManager;
 	
 	// Implementations must have an explicit constructor
 	// in order to declare the RemoteException exception
-	public ManagementService(Uac uac, KeyProvider keyProvider, Config config) throws RemoteException {
+	public ManagementService(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager) throws RemoteException {
 		super(); 
 		
 		this.uac = uac;
 		this.keyProvider = keyProvider;
-		this.config = config;
+		this.fileServerManager = fileServerManager;
+		
+		this.clientConfig = new Config("client");
 	}
 
 	@Override
-	public int getReadQuorum() throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+	public Response getReadQuorum() throws RemoteException {
+		
+		int quorum = this.fileServerManager.getServerProvider().getReadQuorum().size();
+		return new QuorumResponse(QuorumType.READ, quorum);
 	}
 
 	@Override
-	public int getWriteQuorum() throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+	public Response getWriteQuorum() throws RemoteException {
+		
+		int quorum = this.fileServerManager.getServerProvider().getWriteQuorum().size();
+		return new QuorumResponse(QuorumType.WRITE, quorum);
 	}
 
 	@Override
@@ -46,28 +58,52 @@ public class ManagementService implements IManagementService {
 	}
 
 	@Override
-	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback)
+	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback, String username)
 			throws RemoteException {
 		
-		//TODO check login
+		if(username == null) return new SubscriptionResponse(filename, false);
 		
-		if (notifyCallback != null) {
+		if (notifyCallback != null && uac.isLoggedIn(username)) {
 			DownloadStatistics.getInstance().addSubscription(filename, notificationInterval, notifyCallback);
 			return new SubscriptionResponse(filename, true);
 		} else
 			return new SubscriptionResponse(filename, false);
 	}
-
+	 
 	@Override
-	public String getProxyPublicKey() throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+	public void unsubscribe(INotifyCallback notifyCallback)	throws RemoteException {
+		DownloadStatistics.getInstance().removeSubscription(notifyCallback);
 	}
 
 	@Override
-	public boolean setUserPublicKey(String username) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+ 	public Response getProxyPublicKey() throws RemoteException {
+		
+		PublicKey publicKey = null; 
+		
+		try {
+			publicKey = keyProvider.getPublicKey(clientConfig.getString("proxy.key"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return new PublicKeyResponse(publicKey);
+ 	}
+ 
+ 	@Override
+	public Response setUserPublicKey(PublicKey key, String username) throws RemoteException {
+		if(key != null) {
+			try {
+				keyProvider.writeKeyTo(key, "keys/upload." + username.toLowerCase() + ".pub.pem");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return new MessageResponse("Successfully transmitted public key of user: " + username);
+		}
+		
+		return new MessageResponse("Transmitting public key of user " + username + " was not successful.");
+ 	}
 
 }

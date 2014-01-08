@@ -2,6 +2,7 @@ package util;
 
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -9,6 +10,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
 
+import org.bouncycastle.openssl.PEMWriter;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.openssl.PasswordFinder;
@@ -54,6 +56,12 @@ public class KeyProvider {
 		in.close();
 		return publicKey;
 	}
+	
+	public void writeKeyTo(PublicKey key, String location) throws IOException {
+		PEMWriter out = new PEMWriter(new FileWriter(location));
+		out.writeObject(key);
+		out.close();
+	}	
 	
 	public static PrivateKey getPrivateKey(String location, final String password) throws IOException {
 		String pathToPrivateKey = location;

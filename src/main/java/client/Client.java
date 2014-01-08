@@ -26,6 +26,7 @@ import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
+import message.response.PublicKeyResponse;
 import model.DownloadTicket;
 import cli.Command;
 import cli.Shell;
@@ -46,6 +47,7 @@ public class Client implements Runnable {
 	private KeyProvider keyProvider;
 	private IManagementService managementService;
 	private INotifyCallback notifyCallback;
+	private String username;
 
 	public static void main(String... args) {
 		String client = "client";
@@ -115,6 +117,7 @@ public class Client implements Runnable {
 		public Response login(String username, String password) throws IOException {
 			LoginRequest req = new LoginRequest(username, password);
 			Response r = proxy.login(req);	
+			Client.this.username = username;
 			return r;
 		}
 
@@ -186,7 +189,13 @@ public class Client implements Runnable {
 		@Override
 		@Command
 		public MessageResponse logout() throws IOException {
-			MessageResponse r = proxy.logout();	
+			MessageResponse r = proxy.logout();		
+			try {
+				managementService.unsubscribe(notifyCallback);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			return r;
 		}
 
@@ -200,6 +209,30 @@ public class Client implements Runnable {
 			shell.close();
 			System.in.close();
 			return new MessageResponse("Shutting down. Bye-bye");
+		}
+		
+		@Command
+		public Response readQuorum() {		
+			Response r = null;		
+			try {			
+				r = managementService.getReadQuorum();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		
+			return r;
+		}
+
+		@Command
+		public Response writeQuorum() {		
+			Response r = null;		
+			try {
+				r = managementService.getWriteQuorum();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		
+			return r;
 		}
 		
 		@Command
@@ -218,13 +251,71 @@ public class Client implements Runnable {
 		public Response subscribe(String filename, int numberOfDownloads) {		
 			Response r = null;
 			try {
-				r = managementService.subscribe(filename, numberOfDownloads, notifyCallback);
+				r = managementService.subscribe(filename, numberOfDownloads, notifyCallback, Client.this.username);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}	
 			return r;
 		}
+		
+		@Command
+		public Response getProxyPublicKey() {		
+			Response r = null;
+			try {
+				r = managementService.getProxyPublicKey();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}	
+					
+			if(r instanceof PublicKeyResponse) {
+						
+				PublicKey publicKey = (PublicKey) ((PublicKeyResponse) r).getKey();
+						
+				if(publicKey != null) {
+					try {
+						keyProvider.writeKeyTo(publicKey, "keys/download.proxy.pub.pem");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+							
+				return new MessageResponse("Successfully received public key of Proxy.");
+				}
+			}
+			
+			return new MessageResponse("Receiving public key failed.");
+		}
+		
+
+		@Command
+		public Response setUserPublicKey(String username) {		
+					
+			PublicKey publicUserKey = null; 
+					
+			try {
+				publicUserKey = keyProvider.getPublicUserKey(username);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+					
+			if(publicUserKey != null) {
+				Response r = null;
+				try {
+					r = managementService.setUserPublicKey(publicUserKey, username);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+						
+			return r;
+			}
+					
+		return new MessageResponse("Transmitting public key of user " + username + " was not successful.");
+		}
+
 	}
 
 }

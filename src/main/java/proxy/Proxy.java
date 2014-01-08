@@ -115,7 +115,7 @@ public class Proxy implements Runnable {
 		fileServerManager.start();
 
 		// Start managementServiceServer
-		managementServiceServer = new ManagementServiceServer(uac, keyProvider, config);
+		managementServiceServer = new ManagementServiceServer(uac, keyProvider, fileServerManager);
 		managementServiceServer.start();
 
 		// Run server in own thread

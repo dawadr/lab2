@@ -140,6 +140,16 @@ public interface IClientCli {
 	 * @return exit message
 	 * @throws IOException if an I/O error occurs
 	 */
-	MessageResponse exit() throws IOException;
+	MessageResponse exit() throws IOException;Response readQuorum();
+		
+	Response writeQuorum();
+
+	Response topThreeDownloads();
+	
+	Response subscribe(String filename, int numberOfDownloads);
+		
+	Response getProxyPublicKey();
+		
+	Response setUserPublicKey(String username);
 	
 }
