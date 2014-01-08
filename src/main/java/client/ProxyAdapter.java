@@ -1,7 +1,6 @@
 package client;
 
 import java.io.IOException;
-import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
@@ -57,7 +56,7 @@ public class ProxyAdapter implements IProxy {
 				throw new IOException("Wrong username or password.", e);
 			}
 
-			// channelFactory für die Connection mit den keys initialisieren
+			// channelFactory fuer die Connection mit den keys initialisieren
 			SecureProxyChannelFactory channelFactory = new SecureProxyChannelFactory(username, privateKey, publicKey);
 			conn = new TcpConnection(host, port, channelFactory);
 

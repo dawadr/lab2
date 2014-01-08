@@ -18,13 +18,13 @@ public class ManagementServiceServer {
 	private ILogAdapter log;
 	private IManagementService ms;
 	
-	public ManagementServiceServer(Uac uac, KeyProvider keyProvider, Config config, FileServerManager fileServerManager) {	
+	public ManagementServiceServer(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager) {	
 		Config mc = new Config("mc");
 		this.port = mc.getInt("proxy.rmi.port");
 		this.name = mc.getString("binding.name");
 		
 		try {
-			this.ms = new ManagementService(uac, keyProvider, config, fileServerManager);
+			this.ms = new ManagementService(uac, keyProvider, fileServerManager);
 		} catch (RemoteException e) {
 			log("ManagementServiceImpl could not be initialized: " + e);
 		}

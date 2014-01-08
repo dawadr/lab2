@@ -9,11 +9,10 @@ import proxy.FileServerManager;
 import proxy.Uac;
 import util.Config;
 import util.KeyProvider;
-import client.IClientCli;
 import message.Response;
 import message.response.QuorumResponse;
 import message.response.QuorumResponse.QuorumType;
-import message.response.KeyResponse;
+import message.response.PublicKeyResponse;
 import message.response.MessageResponse;
 import message.response.SubscriptionResponse;
 import message.response.TopThreeDownloadsResponse;
@@ -22,19 +21,17 @@ public class ManagementService implements IManagementService {
 	
 	private Uac uac;
 	private KeyProvider keyProvider;
-	private Config proxyConfig;
 	private Config clientConfig;
 	private FileServerManager fileServerManager;
 	
 	// Implementations must have an explicit constructor
 	// in order to declare the RemoteException exception
-	public ManagementService(Uac uac, KeyProvider keyProvider, Config config, 
-			FileServerManager fileServerManager) throws RemoteException {
+	public ManagementService(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager) 
+			throws RemoteException {
 		super(); 
 		
 		this.uac = uac;
 		this.keyProvider = keyProvider;
-		this.proxyConfig = config;
 		this.clientConfig = new Config("client");
 		this.fileServerManager = fileServerManager;
 	}
@@ -84,7 +81,7 @@ public class ManagementService implements IManagementService {
 			e.printStackTrace();
 		}
 		
-		return new KeyResponse(publicKey);
+		return new PublicKeyResponse(publicKey);
 	}
 
 	@Override
@@ -101,6 +98,12 @@ public class ManagementService implements IManagementService {
 		}
 		
 		return new MessageResponse("Transmitting public key of user " + username + " was not successful.");
+	}
+
+	@Override
+	public void unsubscribe(INotifyCallback notifyCallback)
+			throws RemoteException {
+		DownloadStatistics.getInstance().removeSubscription(notifyCallback);
 	}
 
 }

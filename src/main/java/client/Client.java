@@ -21,7 +21,7 @@ import message.request.LoginRequest;
 import message.request.UploadRequest;
 import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
-import message.response.KeyResponse;
+import message.response.PublicKeyResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
 import cli.Command;
@@ -185,6 +185,12 @@ public class Client implements Runnable {
 		@Command
 		public MessageResponse logout() throws IOException {
 			MessageResponse r = proxy.logout();	
+			try {
+				managementService.unsubscribe(notifyCallback);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			return r;
 		}
 
@@ -258,9 +264,9 @@ public class Client implements Runnable {
 				e.printStackTrace();
 			}	
 			
-			if(r instanceof KeyResponse) {
+			if(r instanceof PublicKeyResponse) {
 				
-				PublicKey publicKey = (PublicKey) ((KeyResponse) r).getKey();
+				PublicKey publicKey = (PublicKey) ((PublicKeyResponse) r).getKey();
 				
 				if(publicKey != null) {
 					try {

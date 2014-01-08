@@ -5,6 +5,7 @@ import message.response.*;
 
 import java.io.IOException;
 
+
 /**
  * This interface defines the functionality for the client.
  */
@@ -142,4 +143,15 @@ public interface IClientCli {
 	 */
 	MessageResponse exit() throws IOException;
 	
+	Response readQuorum();
+	
+	Response writeQuorum();
+	
+	Response topThreeDownloads();
+	
+	Response subscribe(String filename, int numberOfDownloads);
+	
+	Response getProxyPublicKey();
+	
+	Response setUserPublicKey(String username);
 }

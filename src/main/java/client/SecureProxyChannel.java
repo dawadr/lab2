@@ -10,13 +10,10 @@ import javax.crypto.spec.SecretKeySpec;
 
 import net.channel.AESChannel;
 import net.channel.ChannelDecorator;
-import net.channel.DataMessage;
 import net.channel.IChannel;
 import net.channel.RSAChannel;
 
 import org.bouncycastle.util.encoders.Base64;
-
-import util.Serialization;
 
 /**
  * Ein Channel, der eine sichere Verbindung zur Verfuegung stellt.

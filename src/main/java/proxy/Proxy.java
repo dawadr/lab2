@@ -101,7 +101,7 @@ public class Proxy implements Runnable {
 		keyProvider = new KeyProvider(config.getString("keys.dir"));
 		
 		// Start managementServiceServer
-		managementServiceServer = new ManagementServiceServer(uac, keyProvider, config, fileServerManager);
+		managementServiceServer = new ManagementServiceServer(uac, keyProvider, fileServerManager);
 		managementServiceServer.start();
 
 		// Run server in own thread

@@ -22,4 +22,6 @@ public interface IManagementService extends Remote {
 	
 	public Response setUserPublicKey(PublicKey key, String username) throws RemoteException;
 	
+	public void unsubscribe(INotifyCallback notifyCallback) throws RemoteException;
+	
 }
