@@ -52,7 +52,7 @@ public class FileServer implements Runnable {
 	@Override
 	public void run() {
 		// Init thread pool
-		threadPool = Executors.newFixedThreadPool(50);
+		threadPool = Executors.newCachedThreadPool();
 
 		// Init fileManager
 		fileManager = new FileManager(config.getString("fileserver.dir"));

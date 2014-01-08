@@ -43,7 +43,7 @@ public class ComponentFactory {
 	 * @throws Exception if an exception occurs
 	 */
 	public IProxyCli startProxy(Config config, Shell shell) throws Exception {
-		Proxy proxy = new Proxy(config, new UserConfig("user"), shell);
+		Proxy proxy = new Proxy(config, new UserConfig("user"), new Config("mc"), shell);
 		threadPool.execute(proxy);
 		return proxy.getCli();
 	}

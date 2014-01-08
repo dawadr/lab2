@@ -32,6 +32,8 @@ public class Proxy implements Runnable {
 
 	private Config config;
 	private UserConfig userConfig;
+	private Config mcConfig;
+	
 	private Shell shell;
 	private IProxyCli cli;
 	private ExecutorService threadPool;
@@ -45,16 +47,19 @@ public class Proxy implements Runnable {
 	public static void main(String... args) {
 		String config = "proxy";
 		String user = "user";
-		if (args.length > 1) {
+		String mc = "mc";
+		if (args.length > 2) {
 			config = args[0];
 			user = args[1];
+			mc = args[2];
 		}
-		new Proxy(new Config(config), new UserConfig(user), new Shell(config, System.out, System.in)).run();
+		new Proxy(new Config(config), new UserConfig(user), new Config(mc), new Shell(config, System.out, System.in)).run();
 	}
 
-	public Proxy(Config config, UserConfig userConfig, Shell shell) {	
+	public Proxy(Config config, UserConfig userConfig, Config mcConfig, Shell shell) {	
 		this.config = config;
 		this.userConfig = userConfig;
+		this.mcConfig = mcConfig;
 		this.shell = shell;
 		this.cli = new ProxyCli();
 		this.shell.register(cli);
@@ -83,8 +88,7 @@ public class Proxy implements Runnable {
 		}
 
 		// Init thread pool
-		// TODO nicht fixed size
-		threadPool = Executors.newFixedThreadPool(50);
+		threadPool = Executors.newCachedThreadPool();
 
 		// Init log
 		ILogAdapter log = new ILogAdapter() {
@@ -137,7 +141,7 @@ public class Proxy implements Runnable {
 		fileServerManager.start();
 
 		// Start managementServiceServer
-		managementServiceServer = new ManagementServiceServer(uac, keyProvider, fileServerManager);
+		managementServiceServer = new ManagementServiceServer(uac, keyProvider, fileServerManager, mcConfig.getInt("proxy.rmi.port"), mcConfig.getString("binding.name"));
 		managementServiceServer.start();
 
 		// Run server in own thread

@@ -22,19 +22,15 @@ public class ManagementService implements IManagementService {
 	
 	private Uac uac;
 	private KeyProvider keyProvider;
-	private Config clientConfig;
 	private FileServerManager fileServerManager;
 	
 	// Implementations must have an explicit constructor
 	// in order to declare the RemoteException exception
 	public ManagementService(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager) throws RemoteException {
 		super(); 
-		
 		this.uac = uac;
 		this.keyProvider = keyProvider;
 		this.fileServerManager = fileServerManager;
-		
-		this.clientConfig = new Config("client");
 	}
 
 	@Override
@@ -81,7 +77,7 @@ public class ManagementService implements IManagementService {
 		PublicKey publicKey = null; 
 		
 		try {
-			publicKey = KeyProvider.getPublicKeyFrom(clientConfig.getString("proxy.key"));
+			publicKey = keyProvider.getPublicKey("proxy.key");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
