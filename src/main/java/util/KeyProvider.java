@@ -19,24 +19,24 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class KeyProvider {
 
-	private String userKeysPath;
+	private String keysPath;
 
-	public KeyProvider(String userKeysPath) {
-		this.userKeysPath = userKeysPath;
+	public KeyProvider(String keysPath) {
+		this.keysPath = keysPath;
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
 
-	public PublicKey getPublicUserKey(String username) throws IOException {
-		String pathToPublicKey = userKeysPath + "/" + username + ".pub.pem";
+	public PublicKey getPublicKey(String name) throws IOException {
+		String pathToPublicKey = keysPath + "/" + name + ".pub.pem";
 		PEMReader in = new PEMReader(new FileReader(pathToPublicKey)); 
 		PublicKey publicKey = (PublicKey) in.readObject();
 		in.close();
 		return publicKey;
 	}
 
-	public PrivateKey getPrivateUserKey(String name, final String password) throws IOException {
-		String pathToPrivateKey = userKeysPath + "/" + name + ".pem";
+	public PrivateKey getPrivateKey(String name, final String password) throws IOException {
+		String pathToPrivateKey = keysPath + "/" + name + ".pem";
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
 			public char[] getPassword() {
@@ -49,7 +49,22 @@ public class KeyProvider {
 		return privateKey;
 	}
 	
-	public static PublicKey getPublicKey(String location) throws IOException {
+	public void savePublicKey(PublicKey key, String name) throws IOException {
+		String pathToPublicKey = keysPath + "/" + name + ".pub.pem";
+		PEMWriter out = new PEMWriter(new FileWriter(pathToPublicKey));
+		out.writeObject(key);
+		out.close();
+	}	
+	
+	
+	
+	/**
+	 * Statische Methoden
+	 */
+	
+	
+	public static PublicKey getPublicKeyFrom(String location) throws IOException {
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		String pathToPublicKey = location;
 		PEMReader in = new PEMReader(new FileReader(pathToPublicKey)); 
 		PublicKey publicKey = (PublicKey) in.readObject();
@@ -57,13 +72,8 @@ public class KeyProvider {
 		return publicKey;
 	}
 	
-	public void writeKeyTo(PublicKey key, String location) throws IOException {
-		PEMWriter out = new PEMWriter(new FileWriter(location));
-		out.writeObject(key);
-		out.close();
-	}	
-	
-	public static PrivateKey getPrivateKey(String location, final String password) throws IOException {
+	public static PrivateKey getPrivateKeyFrom(String location, final String password) throws IOException {
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		String pathToPrivateKey = location;
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
@@ -77,7 +87,8 @@ public class KeyProvider {
 		return privateKey;
 	}
 	
-	public static Key getSharedSecretKey(String location) throws IOException {
+	public static Key getSharedSecretKeyFrom(String location) throws IOException {
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		byte[] keyBytes = new byte[1024];
 		String pathToSecretKey = location;
 		FileInputStream fis = new FileInputStream(pathToSecretKey);

@@ -6,6 +6,7 @@ import cli.Shell;
 import java.io.IOException;
 import java.net.SocketException;
 import java.security.Key;
+import java.security.PrivateKey;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +62,28 @@ public class Proxy implements Runnable {
 
 	@Override
 	public void run() {
+
+		// Passwort fuer private key einlesen
+		String privateKeyLocation = config.getString("key");
+		PrivateKey privateKey = null;		
+		try {
+			shell.writeLine("Enter passphrase for private key:");
+			while (privateKey == null) {
+				String input = shell.readLine();	
+				try {
+					privateKey = KeyProvider.getPrivateKeyFrom(privateKeyLocation, input);
+				} catch (IOException e) {
+					shell.writeLine(e.getMessage());
+					shell.writeLine("Enter passphrase for private key:");
+				}
+			}
+		} catch (IOException e3) {
+			e3.printStackTrace();
+			return;
+		}
+
 		// Init thread pool
+		// TODO nicht fixed size
 		threadPool = Executors.newFixedThreadPool(50);
 
 		// Init log
@@ -102,12 +124,12 @@ public class Proxy implements Runnable {
 		String hmacLocation = config.getString("hmac.key");
 		Key sharedSecretKey;
 		try {
-			sharedSecretKey = KeyProvider.getSharedSecretKey(hmacLocation);
+			sharedSecretKey = KeyProvider.getSharedSecretKeyFrom(hmacLocation);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			return;
 		}
-	
+
 		// Start fileServerManager
 		int checkPeriod = config.getInt("fileserver.checkPeriod");
 		int timeout = config.getInt("fileserver.timeout");
@@ -121,8 +143,7 @@ public class Proxy implements Runnable {
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
-			// TODO: Passwort nicht hardcodieren!!!!!
-			IObjectChannelFactory channelFactory = new SecureClientChannelFactory(keyProvider, KeyProvider.getPrivateKey(config.getString("key"), "12345"));
+			IObjectChannelFactory channelFactory = new SecureClientChannelFactory(keyProvider, privateKey);
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);

@@ -28,13 +28,13 @@ public class ProxyAdapter implements IProxy {
 	private KeyProvider keyProvider;
 	private PublicKey publicKey;
 
-/**
- * 
- * @param host
- * @param port
- * @param keyProvider Stellt die Private Keys der User zur Verfuegung
- * @param publicKey Public Key des Proxys
- */
+	/**
+	 * 
+	 * @param host
+	 * @param port
+	 * @param keyProvider Stellt die Private Keys der User zur Verfuegung
+	 * @param publicKey Public Key des Proxys
+	 */
 	public ProxyAdapter(String host, int port, KeyProvider keyProvider, PublicKey publicKey) {
 		this.host = host;
 		this.port = port;
@@ -52,7 +52,7 @@ public class ProxyAdapter implements IProxy {
 			PrivateKey privateKey;
 			try {
 				// private key mit passwort auslesen
-				privateKey = keyProvider.getPrivateUserKey(username, password);
+				privateKey = keyProvider.getPrivateKey(username, password);
 			} catch (IOException e) {
 				throw new IOException("Wrong username or password.", e);
 			}

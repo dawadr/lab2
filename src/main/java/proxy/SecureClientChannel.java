@@ -128,7 +128,7 @@ public class SecureClientChannel extends ChannelDecorator {
 		/**
 		 * RSA neu initialisieren
 		 */
-		PublicKey publicKey = keyProvider.getPublicUserKey(username);
+		PublicKey publicKey = keyProvider.getPublicKey(username);
 		this.rsa = new RSAChannel(decoratedChannel, publicKey, privateKey);
 
 

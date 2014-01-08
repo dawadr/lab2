@@ -81,7 +81,7 @@ public class ManagementService implements IManagementService {
 		PublicKey publicKey = null; 
 		
 		try {
-			publicKey = keyProvider.getPublicKey(clientConfig.getString("proxy.key"));
+			publicKey = KeyProvider.getPublicKeyFrom(clientConfig.getString("proxy.key"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -94,7 +94,7 @@ public class ManagementService implements IManagementService {
 	public Response setUserPublicKey(PublicKey key, String username) throws RemoteException {
 		if(key != null) {
 			try {
-				keyProvider.writeKeyTo(key, "keys/upload." + username.toLowerCase() + ".pub.pem");
+				keyProvider.savePublicKey(key, "upload." + username.toLowerCase());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -71,7 +71,7 @@ public class FileServer implements Runnable {
 
 		// Shared secret key holen
 		try {
-			sharedSecretKey = KeyProvider.getSharedSecretKey(config.getString("hmac.key"));
+			sharedSecretKey = KeyProvider.getSharedSecretKeyFrom(config.getString("hmac.key"));
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;

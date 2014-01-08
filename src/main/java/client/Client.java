@@ -75,7 +75,7 @@ public class Client implements Runnable {
 		// Init ProxyAdapter
 		PublicKey proxyPublicKey;
 		try {
-			proxyPublicKey = KeyProvider.getPublicKey(clientConfig.getString("proxy.key"));
+			proxyPublicKey = KeyProvider.getPublicKeyFrom(clientConfig.getString("proxy.key"));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -275,7 +275,7 @@ public class Client implements Runnable {
 						
 				if(publicKey != null) {
 					try {
-						keyProvider.writeKeyTo(publicKey, "keys/download.proxy.pub.pem");
+						keyProvider.savePublicKey(publicKey, "download.proxy");
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -295,7 +295,7 @@ public class Client implements Runnable {
 			PublicKey publicUserKey = null; 
 					
 			try {
-				publicUserKey = keyProvider.getPublicUserKey(username);
+				publicUserKey = keyProvider.getPublicKey(username);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
