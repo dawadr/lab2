@@ -34,7 +34,7 @@ public class RemoteService {
 	}
 
 	/**
-	 * liefert ein IManagementService und stellt dazu wenn nötig die Verbindung her.
+	 * liefert ein IManagementService und stellt dazu wenn noetig die Verbindung her.
 	 * @return
 	 * @throws NotBoundException
 	 */
