@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -31,32 +32,24 @@ public class LoadTest {
 	private String testFileName;
 	private File downloadFile;
 	private String downloadDir;
+	private Timer taskTimer;
 
 	private int successfulDownloads;
-	private int successfulUploads;
+	private int successfulUploadsNew;
+	private int successfulUploadsOverwrite;
 
 	private List<TestInputStream> inputStreams;
-	//TODO CLose
-
 	private IProxyCli proxy;
-	//TODO CLose
-
 	private IClientCli subscribeClient;
-	//TODO CLose
-
 	private List<IFileServerCli> fileservers;
-	//TODO CLose
-
 	private List<IClientCli> downloadClients;
-	//TODO CLose
 
 	public static void main(String[] args) {
 
 		try {
 			new LoadTest();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.err.println(e);
 		}
 
 	}
@@ -64,13 +57,13 @@ public class LoadTest {
 	public LoadTest() throws Exception {
 
 		readConfig();
-		this.testDuration = 300;
+		this.testDuration = 60; //sec
 
 		Config config = new Config("client");
 		this.downloadDir = config.getString("download.dir");
 
 		this.testFileName = "test.txt";
-		
+
 		createFile(this.testFileName);
 
 
@@ -80,9 +73,6 @@ public class LoadTest {
 		// start proxy
 		TestInputStream proxyInputStream = new TestInputStream();
 		this.inputStreams.add(proxyInputStream);
-		//this.inputStreams.add(proxyInputStream);String password = "12345";
-		//byte[] bytes = password.getBytes();
-		//proxyInputStream.read(bytes);
 		this.proxy = componentFactory.startProxy(new Config("proxy"), new Shell("proxy", new TestOutputStream(System.out), proxyInputStream));
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 		System.out.println("proxy started");
@@ -129,22 +119,25 @@ public class LoadTest {
 		}     
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 		System.out.println(clients + " clients started");
-		
+
 		// log in clients and increase credits
 		for(IClientCli client : downloadClients) {
 			System.out.println("logging in client");
-            client.login("alice", "12345");
-            client.buy(Long.MAX_VALUE);
-	    }
-	    
-	    Timer taskTimer = new Timer();
-	    for(IClientCli client : downloadClients) {
-	            if(downloadsPerMin > 0)
-	                    taskTimer.schedule(new DownloadTask(client), 0, (long) 60000 / downloadsPerMin);
-	            if(uploadsPerMin > 0)
-	                    taskTimer.schedule(new UploadTask(client), 0, (long) 60000 / uploadsPerMin);
-	    }  
+			client.login("alice", "12345");
+			client.buy(999999999);
+		}
 
+		this.taskTimer = new Timer();
+		for(IClientCli client : downloadClients) {
+			if(downloadsPerMin > 0)
+				taskTimer.schedule(new DownloadTask(client), 0, (long) 60000 / downloadsPerMin);
+			if(uploadsPerMin > 0)
+				taskTimer.schedule(new UploadTask(client), 0, (long) 60000 / uploadsPerMin);
+		}  
+		
+		wait(testDuration * 1000);
+
+		exit();
 	}
 
 	private void readConfig() {
@@ -156,11 +149,7 @@ public class LoadTest {
 		this.downloadsPerMin = config.getInt("downloadsPerMin");
 		this.fileSizeKB = config.getInt("fileSizeKB");
 		this.overwriteRatio = Double.parseDouble(config.getString("overwriteRatio"));
-		System.out.println("Clients: " + clients);
-		System.out.println("UploadsPerMin: " + uploadsPerMin);
-		System.out.println("DownloadsPerMin: " + downloadsPerMin);
-		System.out.println("FileSizeKB: " + fileSizeKB);
-		System.out.println("OverwriteRatio: " + overwriteRatio);
+
 	}
 
 	private void createFile(String filename) {
@@ -173,8 +162,7 @@ public class LoadTest {
 			out.write(generateRandomContent());
 			out.close();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.err.println(e);
 		}
 
 	}
@@ -187,6 +175,41 @@ public class LoadTest {
 
 	}
 
+	private void printStat() {
+		System.out.println("Successful Downloads: " + this.successfulDownloads);
+		System.out.println("Successful New Uploads: " + this.successfulUploadsNew);
+		System.out.println("Successful Overwrite Uploads: " + this.successfulUploadsOverwrite);
+	}
+
+	private void exit() {
+
+		taskTimer.cancel();
+
+		try {
+			subscribeClient.exit();
+			proxy.exit();
+
+			for(IClientCli client : downloadClients) {
+				client.exit();
+			}
+
+			for(IFileServerCli server : fileservers) {
+				server.exit();
+			}
+
+			for(TestInputStream tis : inputStreams) {
+				tis.close();
+			}
+		} catch (IOException e) {
+			System.err.println(e);
+		}
+
+		System.out.println("Test ended");
+
+		printStat();
+
+	}
+
 	private class DownloadTask extends TimerTask {
 
 		IClientCli client;
@@ -195,6 +218,7 @@ public class LoadTest {
 			this.client = client;
 		}
 
+		@Override
 		public void run() {
 			try {
 
@@ -204,8 +228,10 @@ public class LoadTest {
 
 				if(actual.startsWith(expected)) LoadTest.this.successfulDownloads++;
 
+				printStat();
+
 			} catch (Exception e) {
-				e.printStackTrace();
+				System.err.println(e);
 			}
 		}
 
@@ -220,10 +246,13 @@ public class LoadTest {
 			this.client = client;
 		}
 
+		@Override
 		public void run() {
 			try {
-			
+
 				String actual = null;
+
+				Boolean overwrite = false;
 
 				if (new Random().nextDouble() > LoadTest.this.overwriteRatio) {
 					//Create new File
@@ -232,16 +261,26 @@ public class LoadTest {
 					LoadTest.this.createFile(randomFilename);
 					actual = client.upload(randomFilename).toString();
 				} else {
-					//Override File
+					//Overwrite File
+					overwrite = true;
 					actual = client.upload(LoadTest.this.testFileName).toString();
 				}
 
 				String expected = "success";
 				assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
-				if(actual.contains(expected)) LoadTest.this.successfulUploads++;
+				if(actual.contains(expected)) {
+					if(overwrite) {
+						successfulUploadsOverwrite++;
+					} else {
+						successfulUploadsNew++;
+					}
+				}
+
+				printStat();
+
 			} catch (Exception e) {
-				e.printStackTrace();
+				System.err.println(e);
 			}
 		}
 	}
