@@ -73,7 +73,7 @@ public class KeyProvider {
 	}
 	
 	public static PrivateKey getPrivateKeyFrom(String location, final String password) throws IOException {
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		//Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		String pathToPrivateKey = location;
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
@@ -88,7 +88,7 @@ public class KeyProvider {
 	}
 	
 	public static Key getSharedSecretKeyFrom(String location) throws IOException {
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		//Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		byte[] keyBytes = new byte[1024];
 		String pathToSecretKey = location;
 		FileInputStream fis = new FileInputStream(pathToSecretKey);

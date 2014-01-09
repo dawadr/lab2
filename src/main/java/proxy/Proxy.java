@@ -69,7 +69,7 @@ public class Proxy implements Runnable {
 
 	@Override
 	public void run() {
-
+/*
 		// Passwort fuer private key einlesen
 		String privateKeyLocation = config.getString("key");
 		PrivateKey privateKey = null;		
@@ -87,7 +87,7 @@ public class Proxy implements Runnable {
 		} catch (IOException e3) {
 			e3.printStackTrace();
 			return;
-		}
+		}*/
 
 		// Init thread pool
 		threadPool = Executors.newCachedThreadPool();
@@ -161,7 +161,8 @@ public class Proxy implements Runnable {
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
-			IObjectChannelFactory secureChannelFactory = new SecureClientChannelFactory(keyProvider, privateKey);
+			IObjectChannelFactory secureChannelFactory = new SecureClientChannelFactory(keyProvider, KeyProvider.getPrivateKeyFrom(config.getString("key"), "12345"));
+			//IObjectChannelFactory secureChannelFactory = new SecureClientChannelFactory(keyProvider, privateKey);
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, secureChannelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);
