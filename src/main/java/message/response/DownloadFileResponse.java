@@ -37,6 +37,10 @@ public class DownloadFileResponse implements Response {
 
 	@Override
 	public String toString() {
-		return "!data " + new String(getContent(), CHARSET);
+		if (getContent().length > 1024) {
+			return "!data " + "[CONTENT TOO LONG TO DISPLAY]";
+		} else {
+			return "!data " + new String(getContent(), CHARSET);
+		}
 	}
 }

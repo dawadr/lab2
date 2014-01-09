@@ -102,6 +102,7 @@ public class LoadTest {
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 
 
+
 		//start subscribeClient
 
 		TestInputStream inputStream = new TestInputStream();
@@ -109,7 +110,7 @@ public class LoadTest {
 		this.subscribeClient = componentFactory.startClient(new Config("client"), new Shell("client", new TestOutputStream(System.out), inputStream));
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 		System.out.println("suscribeClient started");
-		subscribeClient.login("alice", "12345");                
+		subscribeClient.login("alice", "12345");          
 		subscribeClient.upload(testFileName);
 		subscribeClient.subscribe(testFileName, 2);
 		subscribeClient.subscribe(testFileName, 3);
@@ -123,7 +124,7 @@ public class LoadTest {
 		for(int i = 1; i <= clients; i++) {
 			inputStream = new TestInputStream();
 			this.inputStreams.add(inputStream);
-			IClientCli client = componentFactory.startClient(new Config("client"), new Shell("client", new TestOutputStream(System.out), inputStream));
+			IClientCli client = componentFactory.startClient(new Config("client"), new Shell("client" + i, new TestOutputStream(System.out), inputStream));
 			downloadClients.add(client);
 		}     
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
@@ -131,6 +132,7 @@ public class LoadTest {
 		
 		// log in clients and increase credits
 		for(IClientCli client : downloadClients) {
+			System.out.println("logging in client");
             client.login("alice", "12345");
             client.buy(Long.MAX_VALUE);
 	    }

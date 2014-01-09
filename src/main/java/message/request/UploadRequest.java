@@ -40,6 +40,11 @@ public class UploadRequest implements Request {
 
 	@Override
 	public String toString() {
-		return String.format("!upload %s %d %s", getFilename(), getVersion(), new String(getContent(), CHARSET));
+		if (getContent().length > 1024) {
+			return String.format("!upload %s %d %s", getFilename(), getVersion(), "[CONTENT TOO LONG TO DISPLAY]");
+		} else {
+			return String.format("!upload %s %d %s", getFilename(), getVersion(), new String(getContent(), CHARSET));
+		}
+	
 	}
 }

@@ -94,7 +94,7 @@ public class VerifiedObjectChannel implements IObjectChannel {
 			if (o instanceof VerifiedObjectMessage) {
 				hmacUsed = true;
 				VerifiedObjectMessage msg = (VerifiedObjectMessage)o;
-				log("Receiving IntegrityObjectMessage: " + msg.toString());
+				log("Receiving IntegrityObjectMessage, hash = " + msg.getHash());
 				try {
 					if(verify(msg)) {
 						returnObject = msg.getObject();
