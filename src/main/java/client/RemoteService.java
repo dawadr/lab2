@@ -56,7 +56,7 @@ public class RemoteService {
 	 * @throws RemoteException
 	 */
 	public void exportCallback(INotifyCallback callback) throws RemoteException {
-		UnicastRemoteObject.exportObject(callback);
+		//UnicastRemoteObject.exportObject(callback);
 		callbacks.add(callback);
 	}
 
@@ -65,6 +65,11 @@ public class RemoteService {
 	 */
 	public void close() {
 		for (INotifyCallback callback: callbacks) {
+			try {
+				getManagementService().unsubscribe(callback);
+			} catch (NotBoundException e) {
+			} catch (RemoteException e) {
+			}
 			try {
 				UnicastRemoteObject.unexportObject(callback, true);
 			} catch (NoSuchObjectException e) {

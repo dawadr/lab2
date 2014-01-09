@@ -98,6 +98,8 @@ public class Client implements Runnable {
 	private class ClientCli implements IClientCli {
 
 		private INotifyCallback callback;
+		private String username;
+		private String password;
 
 
 		@Override
@@ -105,7 +107,9 @@ public class Client implements Runnable {
 		public Response login(String username, String password) throws IOException {
 			LoginRequest req = new LoginRequest(username, password);
 			Response r = proxy.login(req);	
-			Client.this.username = username;
+			if (this.username != null && !this.username.equals(username)) remoteService.close();
+			this.username = username;
+			this.password = password;
 			return r;
 		}
 
@@ -179,13 +183,7 @@ public class Client implements Runnable {
 		public MessageResponse logout() throws IOException {
 			remoteService.close();
 			MessageResponse r = proxy.logout();		
-			
-			try {
-				remoteService.getManagementService().unsubscribe(callback);
-			} catch (NotBoundException e) {
-			}
 			remoteService.close();
-
 			return r;
 		}
 
@@ -247,7 +245,8 @@ public class Client implements Runnable {
 			Response r = null;
 			try {
 				callback = new NotifyCallbackImpl(shell);
-				r = remoteService.getManagementService().subscribe(filename, numberOfDownloads, callback, Client.this.username);
+				remoteService.exportCallback(callback);
+				r = remoteService.getManagementService().subscribe(filename, numberOfDownloads, callback, username, password);
 			} catch (RemoteException e) {
 				return new FailedResponse(e);
 			} catch (NotBoundException e) {

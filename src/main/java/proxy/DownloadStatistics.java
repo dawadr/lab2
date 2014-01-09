@@ -86,10 +86,9 @@ public class DownloadStatistics {
 	public void removeSubscription(INotifyCallback notifyCallback) {
 		
 		synchronized(this.subscriptions) {
-			for(int i = 0; i < this.subscriptions.size(); i++) {
+			for(int i = this.subscriptions.size() - 1; i >= 0; i--) {
 				if(this.subscriptions.get(i).getNotifyCallback().equals(notifyCallback)) {
 					this.subscriptions.remove(i);
-					i--;
 				}
 			}
 		}

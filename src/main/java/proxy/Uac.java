@@ -42,7 +42,7 @@ public class Uac {
 		}
 		throw new UacException("Invalid username or password.");
 	}
-	
+
 	/**
 	 * Logs out a user
 	 * @param user
@@ -94,11 +94,22 @@ public class Uac {
 	 * Determines whether a user is logged in.
 	 * @return a boolean value, true if logged in
 	 */
-	public synchronized boolean isLoggedIn (String username) {
+	public synchronized boolean isLoggedIn(String username) {
 		if (users.containsKey(username)) {
 			return users.get(username).getUser().isOnline();
 		} 
-		
+
+		return false;
+	}
+
+	public synchronized boolean isValid(String username, String password) {
+		if (username == null || password == null || username.isEmpty() || password.isEmpty()) return false;
+		if (users.containsKey(username)) {
+			UserSessions u = users.get(username);
+			if (password.equals(u.getUser().getPassword())) {
+				return true;
+			}  
+		}
 		return false;
 	}
 

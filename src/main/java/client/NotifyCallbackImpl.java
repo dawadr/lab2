@@ -13,7 +13,7 @@ import message.Response;
  * @author Alex
  *
  */
-public class NotifyCallbackImpl implements INotifyCallback {
+public class NotifyCallbackImpl extends UnicastRemoteObject implements INotifyCallback {
 
 	/**
 	 * 

@@ -11,6 +11,7 @@ import util.Config;
 import util.KeyProvider;
 import client.IClientCli;
 import message.Response;
+import message.response.FailedResponse;
 import message.response.MessageResponse;
 import message.response.PublicKeyResponse;
 import message.response.QuorumResponse.QuorumType;
@@ -33,6 +34,7 @@ public class ManagementService implements IManagementService {
 		this.fileServerManager = fileServerManager;
 	}
 
+	
 	@Override
 	public Response getReadQuorum() throws RemoteException {	
 		Integer quorum = this.fileServerManager.getReadQuorum();
@@ -60,10 +62,10 @@ public class ManagementService implements IManagementService {
 	}
 
 	@Override
-	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback, String username)
+	public Response subscribe(String filename, int notificationInterval, INotifyCallback notifyCallback, String username, String password)
 			throws RemoteException {
 
-		if(username == null) return new SubscriptionResponse(filename, false);
+		if (!uac.isValid(username, password)) return new FailedResponse("You need to be logged in to execute this command.");
 
 		if (notifyCallback != null && uac.isLoggedIn(username)) {
 			DownloadStatistics.getInstance().addSubscription(filename, notificationInterval, notifyCallback);
@@ -85,8 +87,7 @@ public class ManagementService implements IManagementService {
 		try {
 			publicKey = keyProvider.getPublicKey("proxy.key");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return new FailedResponse(e);
 		}
 
 		return new PublicKeyResponse(publicKey);
@@ -98,8 +99,7 @@ public class ManagementService implements IManagementService {
 			try {
 				keyProvider.savePublicKey(key, "upload." + username.toLowerCase());
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				return new FailedResponse(e);
 			}
 
 			return new MessageResponse("Successfully transmitted public key of user: " + username);

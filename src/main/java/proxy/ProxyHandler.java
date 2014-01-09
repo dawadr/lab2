@@ -185,7 +185,7 @@ public class ProxyHandler implements IServerConnectionHandler, IProxy {
 		String filename = request.getFilename();
 
 		/**
-		 * Server mit h�chster Version bestimmen
+		 * Server mit hoechster Version bestimmen
 		 */
 		Queue<FileServerAdapter> nr = provider.getReadQuorum();
 		log("Nr fileservers: " + nr.toString());
