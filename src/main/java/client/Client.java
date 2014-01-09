@@ -1,20 +1,15 @@
 package client;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.security.PublicKey;
 
 import net.IConnection;
-import net.ILogAdapter;
 import net.TcpConnection;
 import net.channel.ObjectChannelFactory;
 import proxy.IProxy;
-import proxy.mc.IManagementService;
 import proxy.mc.INotifyCallback;
 import message.Response;
 import message.request.BuyRequest;
@@ -25,7 +20,6 @@ import message.request.UploadRequest;
 import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
 import message.response.FailedResponse;
-import message.response.LoginResponse;
 import message.response.MessageResponse;
 import message.response.PublicKeyResponse;
 import model.DownloadTicket;
@@ -47,7 +41,6 @@ public class Client implements Runnable {
 	private FileManager fileManager;
 	private KeyProvider keyProvider;
 	private RemoteService remoteService;
-	private String username;
 
 	public static void main(String... args) {
 		String client = "client";
@@ -283,7 +276,6 @@ public class Client implements Runnable {
 
 			return new MessageResponse("Receiving public key failed.");
 		}
-
 
 		@Command
 		public Response setUserPublicKey(String username) {		

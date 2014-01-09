@@ -3,15 +3,11 @@ package net;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import net.channel.IChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
-import net.channel.ObjectChannel;
 
 
 public class TcpServerConnection implements IServerConnection, ILogAdapter {
@@ -49,9 +45,7 @@ public class TcpServerConnection implements IServerConnection, ILogAdapter {
 			channel = channelFactory.create(out, in);
 			channel.setLogAdapter(this);
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			return;
+			throw new RuntimeException(e1);
 		}
 
 		try {

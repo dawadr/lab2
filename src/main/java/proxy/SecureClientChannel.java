@@ -13,14 +13,12 @@ import javax.crypto.spec.IvParameterSpec;
 
 import net.channel.AESChannel;
 import net.channel.ChannelDecorator;
-import net.channel.DataMessage;
 import net.channel.IChannel;
 import net.channel.RSAChannel;
 
 import org.bouncycastle.util.encoders.Base64;
 
 import util.KeyProvider;
-import util.Serialization;
 
 /**
  * Ein Channel, der eine sichere Verbindung mit dem Client zur Verfuegung stellt.
@@ -111,8 +109,7 @@ public class SecureClientChannel extends ChannelDecorator {
 		try {
 			generator = KeyGenerator.getInstance("AES");
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new IOException(e);
 		} 
 		generator.init(256); 
 		SecretKey secretKey = generator.generateKey(); 

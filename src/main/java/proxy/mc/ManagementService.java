@@ -7,9 +7,7 @@ import java.security.PublicKey;
 import proxy.DownloadStatistics;
 import proxy.FileServerManager;
 import proxy.Uac;
-import util.Config;
 import util.KeyProvider;
-import client.IClientCli;
 import message.Response;
 import message.response.FailedResponse;
 import message.response.MessageResponse;
@@ -24,14 +22,16 @@ public class ManagementService implements IManagementService {
 	private Uac uac;
 	private KeyProvider keyProvider;
 	private FileServerManager fileServerManager;
+	private PublicKey proxyPublicKey;
 
 	// Implementations must have an explicit constructor
 	// in order to declare the RemoteException exception
-	public ManagementService(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager) throws RemoteException {
+	public ManagementService(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager, PublicKey proxyPublicKey) throws RemoteException {
 		super(); 
 		this.uac = uac;
 		this.keyProvider = keyProvider;
 		this.fileServerManager = fileServerManager;
+		this.proxyPublicKey = proxyPublicKey;
 	}
 
 	
@@ -81,16 +81,7 @@ public class ManagementService implements IManagementService {
 
 	@Override
 	public Response getProxyPublicKey() throws RemoteException {
-
-		PublicKey publicKey = null; 
-
-		try {
-			publicKey = keyProvider.getPublicKey("proxy.key");
-		} catch (IOException e) {
-			return new FailedResponse(e);
-		}
-
-		return new PublicKeyResponse(publicKey);
+		return new PublicKeyResponse(proxyPublicKey);
 	}
 
 	@Override

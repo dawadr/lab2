@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Key;
 
-import net.ILogAdapter;
 
 
 public class VerifiedObjectChannelFactory implements IObjectChannelFactory {

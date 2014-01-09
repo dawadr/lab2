@@ -5,7 +5,6 @@ import java.io.IOException;
 
 import org.bouncycastle.util.encoders.Base64;
 
-import util.Serialization;
 
 /**
  * Ein Channel, der die Daten beim Schreiben Base64-verschluesselt und beim Lesen wieder entschluesselt.

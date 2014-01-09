@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.security.Key;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public class Proxy implements Runnable {
 	private Config config;
 	private UserConfig userConfig;
 	private Config mcConfig;
-	
+
 	private Shell shell;
 	private IProxyCli cli;
 	private ExecutorService threadPool;
@@ -146,7 +147,7 @@ public class Proxy implements Runnable {
 				}
 			}	
 		};
-		
+
 		// Start fileServerManager
 		int checkPeriod = config.getInt("fileserver.checkPeriod");
 		int timeout = config.getInt("fileserver.timeout");
@@ -155,7 +156,15 @@ public class Proxy implements Runnable {
 		fileServerManager.start();
 
 		// Start managementServiceServer
-		managementServiceServer = new ManagementServiceServer(uac, keyProvider, fileServerManager, mcConfig.getInt("proxy.rmi.port"), mcConfig.getString("binding.name"));
+		PublicKey proxyPublicKey;
+		try {
+			proxyPublicKey = keyProvider.getPublicKey("proxy");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			return;
+		}
+		managementServiceServer = new ManagementServiceServer(uac, keyProvider, fileServerManager,
+				mcConfig.getInt("proxy.rmi.port"), mcConfig.getString("binding.name"), proxyPublicKey);
 		managementServiceServer.start();
 
 		// Run server in own thread

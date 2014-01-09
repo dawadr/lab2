@@ -1,9 +1,7 @@
 package proxy;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;

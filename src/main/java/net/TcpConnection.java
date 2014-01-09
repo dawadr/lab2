@@ -3,19 +3,13 @@ package net;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import net.channel.Base64Channel;
-import net.channel.IChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
-import net.channel.ObjectChannel;
-
 import message.Request;
 import message.Response;
 import message.response.RefuseResponse;

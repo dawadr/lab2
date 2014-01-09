@@ -4,11 +4,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.PublicKey;
 
 import proxy.FileServerManager;
 import proxy.Uac;
 import net.ILogAdapter;
-import util.Config;
 import util.KeyProvider;
 
 public class ManagementServiceServer {
@@ -18,12 +18,12 @@ public class ManagementServiceServer {
 	private ILogAdapter log;
 	private IManagementService ms;
 	
-	public ManagementServiceServer(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager, int port, String name) {	
+	public ManagementServiceServer(Uac uac, KeyProvider keyProvider, FileServerManager fileServerManager, int port, String name, PublicKey proxyPublicKey) {	
 		this.port = port;
 		this.name = name;
 		
 		try {
-			this.ms = new ManagementService(uac, keyProvider, fileServerManager);
+			this.ms = new ManagementService(uac, keyProvider, fileServerManager, proxyPublicKey);
 		} catch (RemoteException e) {
 			log("ManagementService could not be initialized: " + e);
 		}

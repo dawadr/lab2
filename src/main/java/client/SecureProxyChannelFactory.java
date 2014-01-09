@@ -3,16 +3,13 @@ package client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import util.KeyProvider;
 import net.channel.Base64Channel;
 import net.channel.DataChannel;
 import net.channel.IObjectChannel;
 import net.channel.IObjectChannelFactory;
-import net.channel.ObjectChannel;
 import net.channel.SerializedChannel;
 
 /**

@@ -1,23 +1,9 @@
 package net.channel;
 
 import java.io.IOException;
-import java.security.AlgorithmParameters;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.bouncycastle.util.encoders.Base64;
-import org.bouncycastle.util.encoders.Hex;
-
-import util.Serialization;
 
 /**
  * Ein Channel, der die Daten beim Senden mit den uebergebenen Keys AES-verschluesselt und beim Lesen wieder entschluesselt.

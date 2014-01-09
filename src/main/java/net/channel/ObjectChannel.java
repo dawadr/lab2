@@ -9,10 +9,6 @@ import java.io.OutputStream;
 
 import net.ILogAdapter;
 
-import org.bouncycastle.util.encoders.Base64;
-
-import util.Serialization;
-
 /**
  * Serialisiert/deserialisiert Objekte beim Lesen/Schreiben
  * @author Alex
