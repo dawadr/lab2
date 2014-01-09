@@ -51,7 +51,7 @@ public class RemoteService {
 	}
 
 	/**
-	 * exportiert ein Callback-Pbjekt
+	 * exportiert ein Callback-Objekt
 	 * @param callback
 	 * @throws RemoteException
 	 */

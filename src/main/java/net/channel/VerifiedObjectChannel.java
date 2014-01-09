@@ -28,16 +28,28 @@ public class VerifiedObjectChannel implements IObjectChannel {
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private ILogAdapter log;
+	private int maxRepeat;
+	private ITamperedMessageOutput messageOutput;
 
 	private boolean repeat;
 	private boolean hmacUsed = true;
 	private VerifiedObjectMessage lastSentMessage;
 
-	public VerifiedObjectChannel(OutputStream out, InputStream in, Key key, boolean repeat) throws IOException {
+	/**
+	 * 
+	 * @param out
+	 * @param in
+	 * @param key
+	 * @param repeat
+	 * @throws IOException
+	 */
+	public VerifiedObjectChannel(OutputStream out, InputStream in, Key key, boolean repeat, int maxRepeat, ITamperedMessageOutput messageOutput) throws IOException {
 		this.out = new ObjectOutputStream(out);
 		this.in  = new ObjectInputStream((in));
 		this.key = key;
 		this.repeat = repeat;
+		this.maxRepeat = maxRepeat;
+		this.messageOutput = messageOutput;
 	}
 
 	@Override
@@ -67,6 +79,7 @@ public class VerifiedObjectChannel implements IObjectChannel {
 
 		Object returnObject = null;
 		boolean tampered = true;
+		int i = 0;
 
 		do {
 			Object o;
@@ -88,11 +101,12 @@ public class VerifiedObjectChannel implements IObjectChannel {
 						returnObject = msg.getObject();
 						tampered = false;
 					} else {
-						log(msg.toString());
+						if (messageOutput != null) messageOutput.write(msg.toString());
 						tampered = true;			
 						if (repeat) {
 							// repeat message to fileserver
 							log("Received invalid message - repeating lastSentMessage");
+							i++;
 							out.writeObject(lastSentMessage);
 						} else {
 							//inform proxy about the tampering
@@ -108,6 +122,7 @@ public class VerifiedObjectChannel implements IObjectChannel {
 			else if (o instanceof TamperedMessage) {
 				// repeat message to fileserver
 				log("Received TamperedMessage - repeating lastSentMessage");
+				i++;
 				out.writeObject(lastSentMessage);
 				tampered = true;			
 			}
@@ -118,7 +133,12 @@ public class VerifiedObjectChannel implements IObjectChannel {
 				returnObject = o;
 				tampered = false;
 			}
-		} while (tampered);
+		} while (tampered && i < maxRepeat + 1);
+
+		if (i > maxRepeat) {
+
+			throw new IOException("Maximum number of repeats after tampered messages exceeded.");
+		}
 
 		return returnObject;
 	}
@@ -136,6 +156,7 @@ public class VerifiedObjectChannel implements IObjectChannel {
 
 
 	private boolean verify(VerifiedObjectMessage msg) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, IOException {
+		
 		Mac hMac = Mac.getInstance("HmacSHA256");
 		hMac.init(this.key);
 		hMac.update(Serialization.serialize(msg.getObject()));

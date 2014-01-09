@@ -40,20 +40,20 @@ public class FileServerManager {
 	private int checkPeriod;
 	private int timeout;
 	private ILogAdapter log;
-	private Key key;
+	private VerifiedObjectChannelFactory channelFactory;
 	
 	private int nr;
 	private int nw;
 	private boolean quorumsSet;
 
-	public FileServerManager(IDatagramReceiver datagramReceiver, Key key, int checkPeriod, int timeout, ILogAdapter log) {
-		this.key = key;
+	public FileServerManager(IDatagramReceiver datagramReceiver, int checkPeriod, int timeout, ILogAdapter log, VerifiedObjectChannelFactory channelFactory) {
 		this.log = log;
 		this.checkPeriod = checkPeriod;
 		this.timeout = timeout;
 		this.datagramReceiver = datagramReceiver;
 		this.servers = new ArrayList<FileServer>();
 		this.adapters = new HashMap<FileServer, FileServerAdapter>();
+		this.channelFactory = channelFactory;
 		task = new CheckTask();
 	}
 
@@ -101,6 +101,17 @@ public class FileServerManager {
 		t.cancel();
 	}
 
+	
+	public Integer getReadQuorum() {
+		if (!quorumsSet) return null;
+		return nr;
+	}
+	
+	public Integer getWriteQuorum() {
+		if (!quorumsSet) return null;
+		return nw;
+	}
+	
 	/**
 	 * Returns a {@link FileServerProvider} which provides methods to determine the least used fileserver and to send requests to all fileservers.
 	 * @return
@@ -165,7 +176,7 @@ public class FileServerManager {
 		synchronized (adapters) {
 			if (adapters.containsKey(server)) return adapters.get(server);
 			// TODO AUFPASSEN  new FileserverChannelFactory() AUF integritychannelfactory!!!! 
-			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), new VerifiedObjectChannelFactory(this.key, true));
+			IConnection c = new TcpConnection(server.getAddress().getHostAddress(), server.getPort(), channelFactory);
 			c.setLogAdapter(log);
 			
 			FileServerAdapter a = new FileServerAdapter(c, server, log);

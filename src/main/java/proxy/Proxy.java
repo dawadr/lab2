@@ -21,6 +21,8 @@ import net.IServerConnectionHandlerFactory;
 import net.TcpServer;
 import net.TcpServerConnectionFactory;
 import net.channel.IObjectChannelFactory;
+import net.channel.ITamperedMessageOutput;
+import net.channel.VerifiedObjectChannelFactory;
 import message.Response;
 import message.response.FileServerInfoResponse;
 import message.response.MessageResponse;
@@ -134,10 +136,22 @@ public class Proxy implements Runnable {
 			return;
 		}
 
+		// Output fuer tampered messages
+		ITamperedMessageOutput messageOutput = new ITamperedMessageOutput() {
+			@Override
+			public void write(String message) {
+				try {
+					shell.writeLine(message);
+				} catch (IOException e) {
+				}
+			}	
+		};
+		
 		// Start fileServerManager
 		int checkPeriod = config.getInt("fileserver.checkPeriod");
 		int timeout = config.getInt("fileserver.timeout");
-		fileServerManager = new FileServerManager(datagramReceiver, sharedSecretKey, checkPeriod, timeout, log);	
+		VerifiedObjectChannelFactory channelFactory = new VerifiedObjectChannelFactory(sharedSecretKey, true, 10, messageOutput);
+		fileServerManager = new FileServerManager(datagramReceiver, checkPeriod, timeout, log, channelFactory);	
 		fileServerManager.start();
 
 		// Start managementServiceServer
@@ -147,8 +161,8 @@ public class Proxy implements Runnable {
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new ProxyHandlerFactory(uac, fileServerManager);
-			IObjectChannelFactory channelFactory = new SecureClientChannelFactory(keyProvider, privateKey);
-			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
+			IObjectChannelFactory secureChannelFactory = new SecureClientChannelFactory(keyProvider, privateKey);
+			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, secureChannelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);
 			threadPool.execute(server);

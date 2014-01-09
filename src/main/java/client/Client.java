@@ -177,6 +177,7 @@ public class Client implements Runnable {
 		@Override
 		@Command
 		public MessageResponse logout() throws IOException {
+			remoteService.close();
 			MessageResponse r = proxy.logout();		
 			
 			try {

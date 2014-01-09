@@ -28,7 +28,7 @@ public class ProxyAdapter implements IProxy {
 	private KeyProvider keyProvider;
 	private PublicKey publicKey;
 	
-	private final String notLoggedInMsg = "You need to be logged in to execute this command.";
+	private final String notLoggedInMsg = "Not connected to the server. Please log in.";
 
 	/**
 	 * 

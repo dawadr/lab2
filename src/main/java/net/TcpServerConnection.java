@@ -78,6 +78,7 @@ public class TcpServerConnection implements IServerConnection, ILogAdapter {
 		} catch (EOFException e) {
 			log("Connection closed by client");
 		} catch (IOException e2) {
+			log(e2.getMessage());
 			log("Connection closed");
 		} finally {
 			close();

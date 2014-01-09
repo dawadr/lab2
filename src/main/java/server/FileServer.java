@@ -18,6 +18,7 @@ import net.IServerConnectionHandlerFactory;
 import net.TcpServer;
 import net.TcpServerConnectionFactory;
 import net.channel.IObjectChannelFactory;
+import net.channel.ITamperedMessageOutput;
 import net.channel.VerifiedObjectChannelFactory;
 import message.response.MessageResponse;
 import util.Config;
@@ -77,10 +78,21 @@ public class FileServer implements Runnable {
 			return;
 		}
 		
+		// Output fuer tampered messages
+				ITamperedMessageOutput messageOutput = new ITamperedMessageOutput() {
+					@Override
+					public void write(String message) {
+						try {
+							shell.writeLine(message);
+						} catch (IOException e) {
+						}
+					}	
+				};
+		
 		// Run server in own thread
 		try {
 			IServerConnectionHandlerFactory handlerFactory = new FileServerHandlerFactory(fileManager);
-			IObjectChannelFactory channelFactory = new VerifiedObjectChannelFactory(sharedSecretKey, false);
+			IObjectChannelFactory channelFactory = new VerifiedObjectChannelFactory(sharedSecretKey, false, 0, messageOutput);
 			IServerConnectionFactory connectionFactory = new TcpServerConnectionFactory(handlerFactory, channelFactory);
 			server = new TcpServer(config.getInt("tcp.port"), connectionFactory);
 			server.setLogAdapter(log);
