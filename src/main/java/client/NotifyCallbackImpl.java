@@ -8,7 +8,12 @@ import cli.Shell;
 import proxy.mc.INotifyCallback;
 import message.Response;
 
-public class NotifyCallbackImpl extends UnicastRemoteObject implements INotifyCallback {
+/**
+ * implementiert das INotifyCallback fuer die management component
+ * @author Alex
+ *
+ */
+public class NotifyCallbackImpl implements INotifyCallback {
 
 	/**
 	 * 
@@ -20,7 +25,6 @@ public class NotifyCallbackImpl extends UnicastRemoteObject implements INotifyCa
 		super();
 		this.shell = shell;
 	}
-
 
 
 	@Override

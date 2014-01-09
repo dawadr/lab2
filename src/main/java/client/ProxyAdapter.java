@@ -27,6 +27,8 @@ public class ProxyAdapter implements IProxy {
 	private int port;
 	private KeyProvider keyProvider;
 	private PublicKey publicKey;
+	
+	private final String notLoggedInMsg = "You need to be logged in to execute this command.";
 
 	/**
 	 * 
@@ -66,41 +68,41 @@ public class ProxyAdapter implements IProxy {
 			return (LoginResponse)r;	
 		} catch (IOException e) {
 			if (conn != null) conn.close();
-			return new FailedResponse("Authentication failed: " + e.getMessage());
+			return new FailedResponse("Login failed: " + e.getMessage());
 		}
 	}
 
 	@Override
 	public Response credits() throws IOException {
-		if (!connected()) return new MessageResponse("Not connected to server. Log in first.");
+		if (!connected()) return new MessageResponse(notLoggedInMsg);
 		Response r = conn.send(new CreditsRequest());
 		return r;
 	}
 
 	@Override
 	public Response buy(BuyRequest credits) throws IOException {
-		if (!connected()) return new MessageResponse("Not connected to server. Log in first.");
+		if (!connected()) return new MessageResponse(notLoggedInMsg);
 		Response r = conn.send(credits);
 		return r;
 	}
 
 	@Override
 	public Response list() throws IOException {
-		if (!connected()) return new MessageResponse("Not connected to server. Log in first.");
+		if (!connected()) return new MessageResponse(notLoggedInMsg);
 		Response r = conn.send(new ListRequest());
 		return r;
 	}
 
 	@Override
 	public Response download(DownloadTicketRequest request) throws IOException {
-		if (!connected()) return new MessageResponse("Not connected to server. Log in first.");
+		if (!connected()) return new MessageResponse(notLoggedInMsg);
 		Response r = conn.send(request);
 		return r;
 	}
 
 	@Override
 	public MessageResponse upload(UploadRequest request) throws IOException {
-		if (!connected()) return new MessageResponse("Not connected to server. Log in first.");
+		if (!connected()) return new MessageResponse(notLoggedInMsg);
 		Response r = conn.send(request);
 		if (!(r instanceof MessageResponse)) throw new IOException("Illegal response by proxy.");
 		return (MessageResponse)r;	
@@ -108,7 +110,7 @@ public class ProxyAdapter implements IProxy {
 
 	@Override
 	public MessageResponse logout() throws IOException {
-		if (!connected()) return new MessageResponse("Not connected to server. Log in first.");
+		if (!connected()) return new MessageResponse(notLoggedInMsg);
 		Response r = conn.send(new LogoutRequest());
 		conn.close();
 		if (!(r instanceof MessageResponse)) throw new IOException("Illegal response by proxy.");

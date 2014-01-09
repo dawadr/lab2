@@ -24,6 +24,7 @@ import message.request.LoginRequest;
 import message.request.UploadRequest;
 import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
+import message.response.FailedResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
 import message.response.PublicKeyResponse;
@@ -45,8 +46,7 @@ public class Client implements Runnable {
 	private IProxy proxy;
 	private FileManager fileManager;
 	private KeyProvider keyProvider;
-	private IManagementService managementService;
-	private INotifyCallback notifyCallback;
+	private RemoteService remoteService;
 	private String username;
 
 	public static void main(String... args) {
@@ -71,7 +71,7 @@ public class Client implements Runnable {
 	public void run() {
 		fileManager = new FileManager(clientConfig.getString("download.dir"));
 		keyProvider = new KeyProvider(clientConfig.getString("keys.dir"));
-			
+
 		// Init ProxyAdapter
 		PublicKey proxyPublicKey;
 		try {
@@ -80,28 +80,13 @@ public class Client implements Runnable {
 			throw new RuntimeException(e);
 		}
 		proxy = new ProxyAdapter(clientConfig.getString("proxy.host"), clientConfig.getInt("proxy.tcp.port"), keyProvider, proxyPublicKey);
-			
-		// Init managementService
+
+		// Init remoteService
 		String host = mcConfig.getString("proxy.host");
 		String name = mcConfig.getString("binding.name");
 		int port = mcConfig.getInt("proxy.rmi.port");
-		try {
-			//managementService = (ManagementService) Naming.lookup("rmi://" + host + "/" + name);
-			Registry registry = LocateRegistry.getRegistry(host, port);
-			this.managementService = (IManagementService) registry.lookup(name);
-		} catch (RemoteException e) {
-			throw new RuntimeException(e);
-		} catch (NotBoundException e) {
-			throw new RuntimeException(e);
-		}
-		
-		// Init notifyCallback
-		try {
-			this.notifyCallback = new NotifyCallbackImpl(shell);
-		} catch (RemoteException e) {
-			throw new RuntimeException(e);
-		}
-		
+		remoteService = new RemoteService(host, name, port);
+
 		this.shell.run();
 	}
 
@@ -111,6 +96,9 @@ public class Client implements Runnable {
 
 
 	private class ClientCli implements IClientCli {
+
+		private INotifyCallback callback;
+
 
 		@Override
 		@Command
@@ -190,12 +178,13 @@ public class Client implements Runnable {
 		@Command
 		public MessageResponse logout() throws IOException {
 			MessageResponse r = proxy.logout();		
+			
 			try {
-				managementService.unsubscribe(notifyCallback);
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				remoteService.getManagementService().unsubscribe(callback);
+			} catch (NotBoundException e) {
 			}
+			remoteService.close();
+
 			return r;
 		}
 
@@ -210,16 +199,19 @@ public class Client implements Runnable {
 			System.in.close();
 			return new MessageResponse("Shutting down. Bye-bye");
 		}
-		
+
 		@Command
 		public Response readQuorum() {		
 			Response r = null;		
-			try {			
-				r = managementService.getReadQuorum();
+
+			try {
+				r = remoteService.getManagementService().getReadQuorum();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}		
+				return new FailedResponse(e);
+			} catch (NotBoundException e) {
+				return new FailedResponse("Management service not available.");
+			}
+
 			return r;
 		}
 
@@ -227,93 +219,96 @@ public class Client implements Runnable {
 		public Response writeQuorum() {		
 			Response r = null;		
 			try {
-				r = managementService.getWriteQuorum();
+				r = remoteService.getManagementService().getWriteQuorum();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}		
+				return new FailedResponse(e);
+			} catch (NotBoundException e) {
+				return new FailedResponse("Management service not available.");
+			}	
 			return r;
 		}
-		
+
 		@Command
 		public Response topThreeDownloads() {		
 			Response r = null;		
 			try {
-				r = managementService.getTopThree();
+				r = remoteService.getManagementService().getTopThree();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}		
+				return new FailedResponse(e);
+			} catch (NotBoundException e) {
+				return new FailedResponse("Management service not available.");
+			}	
 			return r;
 		}
-		
+
 		@Command
 		public Response subscribe(String filename, int numberOfDownloads) {		
 			Response r = null;
 			try {
-				r = managementService.subscribe(filename, numberOfDownloads, notifyCallback, Client.this.username);
+				callback = new NotifyCallbackImpl(shell);
+				r = remoteService.getManagementService().subscribe(filename, numberOfDownloads, callback, Client.this.username);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}	
+				return new FailedResponse(e);
+			} catch (NotBoundException e) {
+				return new FailedResponse("Management service not available.");
+			}
 			return r;
 		}
-		
+
 		@Command
 		public Response getProxyPublicKey() {		
 			Response r = null;
 			try {
-				r = managementService.getProxyPublicKey();
+				r = remoteService.getManagementService().getProxyPublicKey();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}	
-					
+				return new FailedResponse(e);
+			} catch (NotBoundException e) {
+				return new FailedResponse("Management service not available.");
+			}
+
 			if(r instanceof PublicKeyResponse) {
-						
-				PublicKey publicKey = (PublicKey) ((PublicKeyResponse) r).getKey();
-						
+
+				PublicKey publicKey = ((PublicKeyResponse) r).getKey();
+
 				if(publicKey != null) {
 					try {
 						keyProvider.savePublicKey(publicKey, "download.proxy");
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						return new FailedResponse(e);
 					}
-							
-				return new MessageResponse("Successfully received public key of Proxy.");
+
+					return new MessageResponse("Successfully received public key of Proxy.");
 				}
 			}
-			
+
 			return new MessageResponse("Receiving public key failed.");
 		}
-		
+
 
 		@Command
 		public Response setUserPublicKey(String username) {		
-					
-			PublicKey publicUserKey = null; 
-					
+
+			PublicKey publicUserKey = null; 			
 			try {
 				publicUserKey = keyProvider.getPublicKey(username);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} catch (IOException e1) {
+				return new FailedResponse(e1);
 			}
-					
+
 			if(publicUserKey != null) {
 				Response r = null;
 				try {
-					r = managementService.setUserPublicKey(publicUserKey, username);
+					r = remoteService.getManagementService().setUserPublicKey(publicUserKey, username);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					return new FailedResponse(e);
+				} catch (NotBoundException e) {
+					return new FailedResponse("Management service not available.");
 				}
-						
-			return r;
+
+				return r;
 			}
-					
-		return new MessageResponse("Transmitting public key of user " + username + " was not successful.");
+
+			return new MessageResponse("Transmitting public key of user " + username + " was not successful.");
 		}
 
 	}

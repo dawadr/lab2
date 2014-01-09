@@ -20,7 +20,7 @@ public class TcpServer implements IServer, ILogAdapter {
 	private ILogAdapter log;
 
 	public TcpServer(int port, IServerConnectionFactory connectionFactory) throws IOException {
-		threadPool = Executors.newFixedThreadPool(50);
+		threadPool = Executors.newCachedThreadPool();
 		serverSocket = new ServerSocket(port);
 		connections = new ArrayList<IServerConnection>();
 		this.connectionFactory = connectionFactory;
