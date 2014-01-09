@@ -23,7 +23,7 @@ public class KeyProvider {
 
 	public KeyProvider(String keysPath) {
 		this.keysPath = keysPath;
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		addProvider();
 	}
 
 
@@ -48,32 +48,31 @@ public class KeyProvider {
 		in.close();
 		return privateKey;
 	}
-	
+
 	public void savePublicKey(PublicKey key, String name) throws IOException {
 		String pathToPublicKey = keysPath + "/" + name + ".pub.pem";
 		PEMWriter out = new PEMWriter(new FileWriter(pathToPublicKey));
 		out.writeObject(key);
 		out.close();
 	}	
-	
-	
-	
+
+
+
 	/**
 	 * Statische Methoden
 	 */
-	
-	
+
 	public static PublicKey getPublicKeyFrom(String location) throws IOException {
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		addProvider();
 		String pathToPublicKey = location;
 		PEMReader in = new PEMReader(new FileReader(pathToPublicKey)); 
 		PublicKey publicKey = (PublicKey) in.readObject();
 		in.close();
 		return publicKey;
 	}
-	
+
 	public static PrivateKey getPrivateKeyFrom(String location, final String password) throws IOException {
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		addProvider();
 		String pathToPrivateKey = location;
 		PEMReader in = new PEMReader(new FileReader(pathToPrivateKey), new PasswordFinder() {
 			@Override
@@ -86,18 +85,25 @@ public class KeyProvider {
 		in.close();
 		return privateKey;
 	}
-	
+
 	public static Key getSharedSecretKeyFrom(String location) throws IOException {
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		addProvider();
 		byte[] keyBytes = new byte[1024];
 		String pathToSecretKey = location;
 		FileInputStream fis = new FileInputStream(pathToSecretKey);
 		fis.read(keyBytes);
 		fis.close();
 		byte[] input = Hex.decode(keyBytes);
-		
+
 		Key key = new SecretKeySpec(input, "HmacSHA256");
 		return key;
 	}
-	
+
+	private static boolean providerAdded = false;
+	private static void addProvider() {
+		if (!providerAdded) {
+			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+			providerAdded = true;
+		}
+	}
 }

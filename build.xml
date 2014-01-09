@@ -79,6 +79,11 @@
 			<arg value="mc"/>
 		</java>
 	</target>
+	
+	<target name="run-loadtest" depends="compile" description="Run client.">
+		<java classname="test.LoadTest" fork="true" classpathref="project.classpath">
+		</java>
+	</target>
 
 	<target name="clean" description="Clean build products.">
 		<delete dir="${build.dir}" />

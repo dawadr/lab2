@@ -124,7 +124,7 @@ public class FileServerManager {
 			if (nw < 1) nw = 1;
 			if (nr < 1) nr = 1;
 			quorumsSet = true;
-			log("Quorums set: Nr = " + nr + ", nw = " + nw);
+			log("Quorums set: Nr = " + nr + ", Nw = " + nw);
 		}
 		
 		synchronized (servers) {

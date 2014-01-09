@@ -18,7 +18,7 @@ import server.IFileServerCli;
 public class ComponentFactory {
 	
 	
-	private ExecutorService threadPool = Executors.newFixedThreadPool(5);
+	private ExecutorService threadPool = Executors.newCachedThreadPool();
 	
 	/**
 	 * Creates and starts a new client instance using the provided {@link Config} and {@link Shell}.
@@ -43,7 +43,7 @@ public class ComponentFactory {
 	 * @throws Exception if an exception occurs
 	 */
 	public IProxyCli startProxy(Config config, Shell shell) throws Exception {
-		Proxy proxy = new Proxy(config, new UserConfig("user"), new Config("mc"), shell);
+		Proxy proxy = new Proxy(config, new UserConfig("user"), new Config("mc"), shell, "12345");
 		threadPool.execute(proxy);
 		return proxy.getCli();
 	}

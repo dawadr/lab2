@@ -46,6 +46,7 @@ public class Proxy implements Runnable {
 	private KeyProvider keyProvider;
 	private Uac uac;
 	private ManagementServiceServer managementServiceServer;
+	private String passphrase;
 
 	public static void main(String... args) {
 		String config = "proxy";
@@ -67,28 +68,53 @@ public class Proxy implements Runnable {
 		this.cli = new ProxyCli();
 		this.shell.register(cli);
 	}
+	
+	/**
+	 * zweiter konstrukor mit passphrase-uebergabe fuer testzwecke
+	 * @param config
+	 * @param userConfig
+	 * @param mcConfig
+	 * @param shell
+	 * @param passphrase
+	 */
+	public Proxy(Config config, UserConfig userConfig, Config mcConfig, Shell shell, String passphrase) {	
+		this( config,  userConfig,  mcConfig,  shell);
+		this.passphrase = passphrase;
+	}
 
+	
 	@Override
 	public void run() {
-
-		// Passwort fuer private key einlesen
+		
+		// Private Key entschluesseln
 		String privateKeyLocation = config.getString("key");
-		PrivateKey privateKey = null;		
-		try {
-			shell.writeLine("Enter passphrase for private key:");
-			while (privateKey == null) {
-				String input = shell.readLine();	
-				try {
-					privateKey = KeyProvider.getPrivateKeyFrom(privateKeyLocation, input);
-				} catch (IOException e) {
-					shell.writeLine(e.getMessage());
-					shell.writeLine("Enter passphrase for private key:");
-				}
+		PrivateKey privateKey = null;	
+		if (passphrase != null) {
+			try {
+				privateKey = KeyProvider.getPrivateKeyFrom(privateKeyLocation, passphrase);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return;
 			}
-		} catch (IOException e3) {
-			e3.printStackTrace();
-			return;
+		} else {
+			// Passwort fuer private key einlesen
+			try {
+				shell.writeLine("Enter passphrase for private key:");
+				while (privateKey == null) {
+					String input = shell.readLine();	
+					try {
+						privateKey = KeyProvider.getPrivateKeyFrom(privateKeyLocation, input);
+					} catch (IOException e) {
+						shell.writeLine(e.getMessage());
+						shell.writeLine("Enter passphrase for private key:");
+					}
+				}
+			} catch (IOException e3) {
+				e3.printStackTrace();
+				return;
+			}
 		}
+		
 
 		// Init thread pool
 		threadPool = Executors.newCachedThreadPool();
