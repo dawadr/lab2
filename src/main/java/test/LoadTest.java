@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import proxy.IProxyCli;
 import cli.Shell;
 import cli.TestInputStream;
@@ -30,9 +29,9 @@ public class LoadTest {
 	private double overwriteRatio;
 	private int testDuration;
 	private String testFileName;
-	private File downloadFile;
 	private String downloadDir;
 	private Timer taskTimer;
+	private ComponentFactory componentFactory;
 
 	private int successfulDownloads;
 	private int successfulUploadsNew;
@@ -45,30 +44,47 @@ public class LoadTest {
 	private List<IClientCli> downloadClients;
 
 	public static void main(String[] args) {
-
 		try {
-			new LoadTest();
+			LoadTest t = new LoadTest();
+			t.run();
+
 		} catch (Exception e) {
 			System.err.println(e);
 		}
-
 	}
 
-	public LoadTest() throws Exception {
+	
+	public LoadTest() {
+		// read config
+		Config config = new Config("loadtest");
+		this.clients = config.getInt("clients");
+		this.uploadsPerMin = config.getInt("uploadsPerMin");
+		this.downloadsPerMin = config.getInt("downloadsPerMin");
+		this.fileSizeKB = config.getInt("fileSizeKB");
+		this.overwriteRatio = Double.parseDouble(config.getString("overwriteRatio"));
+		// standard duration = 30
+		this.testDuration = 30; //sec
+		try {
+			testDuration = config.getInt("duration");
+		} catch (Exception e) {
+		}
+	}
 
-		readConfig();
-		this.testDuration = 60; //sec
 
+	public void run() throws Exception {
 		Config config = new Config("client");
 		this.downloadDir = config.getString("download.dir");
 
 		this.testFileName = "test.txt";
-
 		createFile(this.testFileName);
 
-
-		ComponentFactory componentFactory = new ComponentFactory();
+		componentFactory = new ComponentFactory();
 		this.inputStreams = new ArrayList<TestInputStream>();
+
+		System.out.println("----------------------------------------");
+		System.out.println("STARTING COMPONENTS");
+		System.out.println("----------------------------------------");
+		Thread.sleep(1000);
 
 		// start proxy
 		TestInputStream proxyInputStream = new TestInputStream();
@@ -76,7 +92,6 @@ public class LoadTest {
 		this.proxy = componentFactory.startProxy(new Config("proxy"), new Shell("proxy", new TestOutputStream(System.out), proxyInputStream));
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 		System.out.println("proxy started");
-
 
 		// start fileservers
 		this.fileservers = new ArrayList<IFileServerCli>();
@@ -91,10 +106,7 @@ public class LoadTest {
 		}
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 
-
-
 		//start subscribeClient
-
 		TestInputStream inputStream = new TestInputStream();
 		this.inputStreams.add(inputStream);
 		this.subscribeClient = componentFactory.startClient(new Config("client"), new Shell("client", new TestOutputStream(System.out), inputStream));
@@ -109,7 +121,6 @@ public class LoadTest {
 
 
 		// start downloadClients
-
 		downloadClients = new ArrayList<IClientCli>();
 		for(int i = 1; i <= clients; i++) {
 			inputStream = new TestInputStream();
@@ -127,6 +138,12 @@ public class LoadTest {
 			client.buy(999999999);
 		}
 
+
+		System.out.println("----------------------------------------");
+		System.out.println("STARTING LOAD TEST");
+		System.out.println("----------------------------------------");
+		Thread.sleep(2000);
+
 		this.taskTimer = new Timer();
 		for(IClientCli client : downloadClients) {
 			if(downloadsPerMin > 0)
@@ -134,26 +151,14 @@ public class LoadTest {
 			if(uploadsPerMin > 0)
 				taskTimer.schedule(new UploadTask(client), 0, (long) 60000 / uploadsPerMin);
 		}  
-		
-		wait(testDuration * 1000);
 
+		Thread.sleep(testDuration * 1000);
 		exit();
 	}
 
-	private void readConfig() {
 
-		Config config = new Config("loadtest");
-
-		this.clients = config.getInt("clients");
-		this.uploadsPerMin = config.getInt("uploadsPerMin");
-		this.downloadsPerMin = config.getInt("downloadsPerMin");
-		this.fileSizeKB = config.getInt("fileSizeKB");
-		this.overwriteRatio = Double.parseDouble(config.getString("overwriteRatio"));
-
-	}
 
 	private void createFile(String filename) {
-
 		File f = new File(this.downloadDir + "/" + filename);
 		f.delete();
 
@@ -164,15 +169,12 @@ public class LoadTest {
 		} catch (Exception e) {
 			System.err.println(e);
 		}
-
 	}
 
 	private byte[] generateRandomContent() {
-
 		byte[] randomData = new byte[(1024 * this.fileSizeKB)];
 		new Random().nextBytes(randomData);
 		return randomData;
-
 	}
 
 	private void printStat() {
@@ -180,14 +182,15 @@ public class LoadTest {
 		System.out.println("Successful New Uploads: " + this.successfulUploadsNew);
 		System.out.println("Successful Overwrite Uploads: " + this.successfulUploadsOverwrite);
 	}
-
+	
 	private void exit() {
-
 		taskTimer.cancel();
+		try {	
+			for(TestInputStream tis : inputStreams) {
+				tis.close();
+			}
 
-		try {
 			subscribeClient.exit();
-			proxy.exit();
 
 			for(IClientCli client : downloadClients) {
 				client.exit();
@@ -197,17 +200,17 @@ public class LoadTest {
 				server.exit();
 			}
 
-			for(TestInputStream tis : inputStreams) {
-				tis.close();
-			}
+			proxy.exit();
 		} catch (IOException e) {
 			System.err.println(e);
 		}
 
-		System.out.println("Test ended");
-
+		componentFactory.shutdown();
+		
+		System.out.println("----------------------------------------");
+		System.out.println("TEST FINISHED");
+		System.out.println("----------------------------------------");
 		printStat();
-
 	}
 
 	private class DownloadTask extends TimerTask {

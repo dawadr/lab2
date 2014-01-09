@@ -16,10 +16,10 @@ import server.IFileServerCli;
  * Provides methods for starting an arbitrary amount of various components.
  */
 public class ComponentFactory {
-	
-	
+
+
 	private ExecutorService threadPool = Executors.newCachedThreadPool();
-	
+
 	/**
 	 * Creates and starts a new client instance using the provided {@link Config} and {@link Shell}.
 	 *
@@ -60,5 +60,10 @@ public class ComponentFactory {
 		FileServer fileServer = new FileServer(config, shell);
 		threadPool.execute(fileServer);
 		return fileServer.getCli();
+	}
+
+
+	public void shutdown() {
+		threadPool.shutdownNow();
 	}
 }
